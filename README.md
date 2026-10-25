@@ -1,1 +1,0 @@
-# Crynova-Wallet-Visa
