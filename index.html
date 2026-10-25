@@ -1,1281 +1,589 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>بطاقة Visa - Crynova</title>
-  
-  <!-- Telegram Web App SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
-  <!-- Firebase SDK (نسخة التوافق) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-  
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    :root {
-      --primary: #0072ff;
-      --secondary: #ff2d9e;
-      --accent: #7d3dff;
-      --danger: #ff4757;
-      --success: #26a17b;
-      --warning: #ff9f00;
-      --info: #2d87ff;
-      --visa-blue: #1a1f71;
-      --visa-gold: #f0b90b;
-      --visa-platinum: #e5e4e2;
-      --bg-light: #ffffff;
-      --bg-lighter: #f8f9fa;
-      --text-dark: #1a1a1a;
-      --text-gray: #666;
-      --text-light: #888;
-      --border-light: rgba(0, 0, 0, 0.1);
-      --shadow-light: rgba(0, 0, 0, 0.08);
-      --shadow-medium: rgba(0, 0, 0, 0.15);
-      --shadow-heavy: rgba(0, 0, 0, 0.25);
-    }
-
-    body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-      color: var(--text-dark);
-      min-height: 100vh;
-      padding: 0;
-    }
-
-    .visa-page {
-      padding: 0;
-      background: transparent;
-      min-height: 100vh;
-      display: block;
-    }
-
-    .visa-frame {
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      background: transparent;
-      overflow: visible;   /* تم التعديل: من hidden إلى visible ليسمح بعمل Sticky */
-      position: relative;
-      padding-bottom: 20px;
-    }
-
-    /* ===== الشريط العلوي المعدل - أصبح مثبتاً (sticky) ===== */
-    .visa-header {
-      background: linear-gradient(135deg, #7d3dff, #0072ff);
-      color: white;
-      padding: 25px 15px 20px;
-      text-align: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      width: 100%;
-      box-shadow: 0 4px 12px rgba(0, 114, 255, 0.3);
-      margin-bottom: 0;
-    }
-
-    .visa-header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      margin-top: 0;
-    }
-
-    .visa-header p {
-      opacity: 0.9;
-      font-size: 0.9rem;
-      margin-bottom: 0;
-    }
-
-    .page-close-btn {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      font-size: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      z-index: 11;
-    }
-
-    .page-close-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-50%) scale(1.1);
-    }
-
-    /* ===== المسافة بين الشريط والبطاقة (مثل صفحات الاستلام والتداول) ===== */
-    .visa-carousel {
-      margin: 15px 20px 25px;
-      position: relative;
-      user-select: none;
-    }
-
-    .carousel-container {
-      position: relative;
-      width: 100%;
-      cursor: grab;
-      transition: transform 0.2s ease;
-    }
-
-    .carousel-container:active {
-      cursor: grabbing;
-    }
-
-    .main-visa-card {
-      width: 100%;
-      perspective: 1000px;
-    }
-
-    .card-inner {
-      position: relative;
-      width: 100%;
-      height: 220px;
-      transition: transform 0.8s;
-      transform-style: preserve-3d;
-      cursor: pointer;
-    }
-
-    .card-inner.flipped {
-      transform: rotateY(180deg);
-    }
-
-    .card-front, .card-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px var(--shadow-heavy);
-    }
-
-    .card-front {
-      padding: 25px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .card-back {
-      transform: rotateY(180deg);
-      padding: 25px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-chip {
-      width: 50px;
-      height: 40px;
-      background: linear-gradient(135deg, #f0b90b, #ffd700);
-      border-radius: 8px;
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card-chip::before {
-      content: '';
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      right: 5px;
-      bottom: 5px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 4px;
-    }
-
-    .card-logo {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .visa-logo {
-      font-size: 2.5rem;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .card-type {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.9);
-    }
-
-    .card-number {
-      font-size: 1.4rem;
-      letter-spacing: 2px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      text-align: center;
-      font-family: 'Courier New', monospace;
-    }
-
-    .card-details {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-holder, .card-expiry {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-label {
-      font-size: 0.75rem;
-      opacity: 0.8;
-      margin-bottom: 4px;
-    }
-
-    .card-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .card-back .magnetic-stripe {
-      height: 40px;
-      background: #222;
-      width: 100%;
-      margin-bottom: 20px;
-      border-radius: 4px;
-    }
-
-    .card-back .cvv-section {
-      background: white;
-      color: #222;
-      padding: 10px;
-      border-radius: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .card-back .cvv-label {
-      font-size: 0.8rem;
-      color: #666;
-    }
-
-    .card-back .cvv-number {
-      font-size: 1.2rem;
-      font-weight: 600;
-      letter-spacing: 2px;
-      font-family: 'Courier New', monospace;
-    }
-
-    .card-back .notice {
-      font-size: 0.7rem;
-      opacity: 0.7;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .card-shine {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(
-        120deg,
-        rgba(255, 255, 255, 0) 30%,
-        rgba(255, 255, 255, 0.1) 50%,
-        rgba(255, 255, 255, 0) 70%
-      );
-      transform: translateX(-100%);
-    }
-
-    .card-inner:hover .card-shine {
-      transform: translateX(100%);
-      transition: transform 1s ease;
-    }
-
-    .carousel-dots {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin-top: 20px;
-      direction: ltr;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(26, 31, 113, 0.3);
-      transition: all 0.3s ease;
-      cursor: pointer;
-      border: none;
-      padding: 0;
-    }
-
-    .dot.active {
-      width: 26px;
-      border-radius: 12px;
-      background: var(--visa-blue);
-      box-shadow: 0 0 8px rgba(26, 31, 113, 0.5);
-    }
-
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      margin: 0 20px 30px;
-    }
-
-    .action-item {
-      background: white;
-      border-radius: 16px;
-      padding: 15px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px var(--shadow-light);
-      border: 1px solid transparent;
-    }
-
-    .action-item:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px var(--shadow-medium);
-      border-color: var(--visa-blue);
-    }
-
-    .action-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      margin-bottom: 10px;
-      color: white;
-    }
-
-    .action-icon.freeze {
-      background: linear-gradient(135deg, var(--warning), #ffb347);
-    }
-
-    .action-icon.transactions {
-      background: linear-gradient(135deg, var(--info), #4dabf7);
-    }
-
-    .action-text {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-dark);
-      text-align: center;
-    }
-
-    .card-details-section {
-      background: white;
-      border-radius: 20px;
-      margin: 0 20px 30px;
-      padding: 25px;
-      box-shadow: 0 4px 15px var(--shadow-light);
-    }
-
-    .section-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--text-dark);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-title i {
-      color: var(--visa-blue);
-    }
-
-    .detail-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 0;
-      border-bottom: 1px solid var(--border-light);
-    }
-
-    .detail-item:last-child {
-      border-bottom: none;
-    }
-
-    .detail-label {
-      font-size: 0.95rem;
-      color: var(--text-gray);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .detail-value {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-dark);
-    }
-
-    .detail-value.positive {
-      color: var(--success);
-    }
-
-    .detail-value.warning {
-      color: var(--warning);
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 15px;
-      margin: 0 20px 30px;
-    }
-
-    .visa-btn {
-      flex: 1;
-      padding: 16px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .visa-btn.primary {
-      background: linear-gradient(135deg, var(--visa-blue), #3a3fb3);
-      color: white;
-      box-shadow: 0 5px 15px rgba(26, 31, 113, 0.3);
-    }
-
-    .visa-btn.primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(26, 31, 113, 0.4);
-    }
-
-    .visa-btn.secondary {
-      background: white;
-      color: var(--visa-blue);
-      border: 2px solid var(--visa-blue);
-      box-shadow: 0 4px 12px var(--shadow-light);
-    }
-
-    .visa-btn.secondary:hover {
-      background: var(--visa-blue);
-      color: white;
-      transform: translateY(-3px);
-    }
-
-    .bottom-action {
-      margin: 10px 20px 0;
-    }
-
-    .bottom-action .visa-btn.secondary {
-      width: 100%;
-      flex: none;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .fade-in {
-      animation: fadeIn 0.5s ease forwards;
-    }
-
-    .loading-spinner {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.9);
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .spinner {
-      width: 60px;
-      height: 60px;
-      border: 5px solid rgba(26, 31, 113, 0.3);
-      border-radius: 50%;
-      border-top-color: var(--visa-blue);
-      animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .visa-toast {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--success);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      z-index: 10000;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      max-width: 90%;
-      text-align: center;
-      animation: slideDown 0.3s ease;
-    }
-
-    .visa-toast.error {
-      background: var(--danger);
-    }
-
-    .visa-toast.warning {
-      background: var(--warning);
-    }
-
-    @keyframes slideDown {
-      from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-
-    @media (max-width: 480px) {
-      .quick-actions {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .action-buttons {
-        flex-direction: column;
-      }
-    }
-
-    .refresh-balance-btn {
-      background: transparent;
-      border: none;
-      color: var(--visa-blue);
-      font-size: 1.2rem;
-      cursor: pointer;
-      margin-right: 10px;
-      transition: transform 0.3s ease;
-    }
-    .refresh-balance-btn:hover {
-      transform: rotate(180deg);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05060d">
+<title>CoinTap — لعبة النقر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --gold-2:#ffd24a;--gold-3:#f59e0b;
+  --glass:rgba(255,255,255,.055);
+  --glass-brd:rgba(255,255,255,.1);
+  --cs:clamp(150px,42vw,200px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Cairo',system-ui,sans-serif;background:#05060d;color:#fff;
+  display:flex;justify-content:center;align-items:stretch}
+.app{position:relative;width:100%;max-width:440px;height:100dvh;display:flex;flex-direction:column;
+  overflow:hidden;padding-bottom:env(safe-area-inset-bottom);
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(255,180,40,.22), transparent 55%),
+    radial-gradient(90% 50% at 8% 78%, rgba(60,200,255,.14), transparent 55%),
+    radial-gradient(90% 50% at 95% 60%, rgba(160,80,255,.12), transparent 55%),
+    linear-gradient(180deg,#0b0f22 0%,#070a15 45%,#04050c 100%)}
+.app::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 18%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 78% 12%, #cfe7ff, transparent),
+    radial-gradient(1.6px 1.6px at 62% 32%, #ffe9b0, transparent),
+    radial-gradient(1.2px 1.2px at 28% 46%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 88% 58%, #d9c6ff, transparent),
+    radial-gradient(1.2px 1.2px at 40% 72%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 70% 84%, #b9e8ff, transparent);
+  animation:twinkle 5s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.25}to{opacity:.65}}
+.topbar{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px 6px}
+.user{display:flex;align-items:center;gap:10px}
+.avatar{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;font-size:19px;
+  background:linear-gradient(145deg,#1e2647,#12172e);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14)}
+.uname{font-size:14px;font-weight:700}
+.urank{font-size:11px;color:#ffd36b;font-weight:600;opacity:.9}
+.icon-btn{width:40px;height:40px;border-radius:14px;border:1px solid var(--glass-brd);
+  background:var(--glass);backdrop-filter:blur(14px);color:#cfd6ee;font-size:17px;
+  display:grid;place-items:center;cursor:pointer;transition:transform .15s}
+.icon-btn:active{transform:scale(.92)}
+.hud{position:relative;z-index:3;text-align:center;padding:8px 16px 0}
+.balance-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.coin-mini{width:30px;height:30px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fff6c9, #ffd24a 40%, #f59e0b 75%, #b45309);
+  box-shadow:0 0 16px rgba(255,180,40,.65),inset 0 -3px 6px rgba(120,60,0,.5);
+  display:grid;place-items:center;font-size:14px;color:#8a4b00;font-weight:900;
+  animation:coinSpin 6s linear infinite}
+@keyframes coinSpin{0%,80%{transform:rotateY(0)}90%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+.balance{font-size:clamp(30px,9vw,42px);font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(180deg,#ffffff,#ffe9a8 55%,#ffc23c);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 14px rgba(255,180,40,.45));line-height:1.1}
+.profit{margin-top:2px;font-size:12px;font-weight:600;color:#8fe8ff;
+  display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;
+  background:rgba(74,227,255,.08);border:1px solid rgba(74,227,255,.18)}
+.profit .dot{width:6px;height:6px;border-radius:50%;background:#4ae3ff;
+  box-shadow:0 0 8px #4ae3ff;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.tap-area{position:relative;flex:1;display:grid;place-items:center;z-index:2;
+  overflow:hidden;min-height:0}
+.coin-wrap{position:relative;display:grid;place-items:center;
+  animation:coinFloat 3.4s ease-in-out infinite}
+@keyframes coinFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.ring{position:absolute;border-radius:50%;pointer-events:none;width:var(--cs);height:var(--cs);
+  border:1.5px solid rgba(255,200,80,.35);animation:ringPulse 3s ease-out infinite}
+.ring.r2{animation-delay:1.5s}
+@keyframes ringPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
+.coin{width:var(--cs);height:var(--cs);border-radius:50%;position:relative;
+  display:grid;place-items:center;cursor:pointer;
+  background:radial-gradient(circle at 34% 28%, #fffbe0 0%, #ffe27a 22%, #ffc93c 48%, #f59e0b 72%, #a8500a 100%);
+  box-shadow:0 0 0 7px rgba(255,190,60,.10),0 0 55px rgba(255,168,20,.55),
+    0 26px 45px -12px rgba(0,0,0,.85),inset 0 -14px 28px rgba(120,50,0,.55),
+    inset 0 14px 26px rgba(255,255,255,.65);
+  transition:transform .07s cubic-bezier(.34,1.6,.64,1);will-change:transform}
+.coin.pressed{transform:scale(.92)}
+.coin::before{content:'';position:absolute;inset:11%;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.4);
+  box-shadow:inset 0 0 22px rgba(255,255,255,.3);pointer-events:none}
+.coin::after{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,.5) 32deg, transparent 70deg,
+    transparent 180deg, rgba(255,255,255,.35) 212deg, transparent 250deg);
+  animation:shineSpin 5s linear infinite;mix-blend-mode:screen;opacity:.8}
+@keyframes shineSpin{to{transform:rotate(360deg)}}
+.symbol{position:relative;z-index:2;font-size:calc(var(--cs)*.42);font-weight:900;color:#9a5200;
+  text-shadow:0 2px 0 rgba(255,255,255,.55);filter:drop-shadow(0 0 14px rgba(255,255,255,.65));
+  pointer-events:none}
+.float{position:absolute;font-weight:900;font-size:22px;color:#fff;pointer-events:none;z-index:20;
+  white-space:nowrap;text-shadow:0 0 18px rgba(255,200,60,.95),0 3px 10px rgba(0,0,0,.7);
+  animation:floatUp .95s cubic-bezier(.2,.7,.3,1) forwards;transform:translate(-50%,-50%)}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
+  18%{opacity:1;transform:translate(-50%,-70%) scale(1.18)}
+  100%{opacity:0;transform:translate(-50%,-190%) scale(.9)}}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;z-index:15;
+  border:2px solid rgba(255,215,90,.85);transform:translate(-50%,-50%);
+  animation:rippleOut .6s ease-out forwards}
+@keyframes rippleOut{0%{width:10px;height:10px;opacity:.9}100%{width:170px;height:170px;opacity:0}}
+.spark{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:16;
+  background:radial-gradient(circle,#fff,#ffc93c);box-shadow:0 0 10px #ffc93c;
+  transform:translate(-50%,-50%)}
+.energy-wrap{position:relative;z-index:3;padding:0 20px 10px}
+.energy-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;
+  font-weight:700;margin-bottom:6px}
+.energy-top .lbl{color:#ffd36b}.energy-top .val{color:#9fb0d0;font-variant-numeric:tabular-nums}
+.energy-bar{height:12px;border-radius:20px;overflow:hidden;position:relative;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+.energy-fill{height:100%;width:100%;border-radius:20px;
+  background:linear-gradient(90deg,#39e6a4,#4ae3ff 55%,#8b7bff);
+  box-shadow:0 0 16px rgba(74,227,255,.7);transition:width .25s ease;position:relative}
+.energy-fill::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+  animation:sweep 2s linear infinite}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.energy-wrap.low .energy-fill{background:linear-gradient(90deg,#ff5a5a,#ff9f43);
+  box-shadow:0 0 16px rgba(255,90,90,.75)}
+.shake{animation:shakeIt .35s}
+@keyframes shakeIt{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.boosts{position:relative;z-index:3;display:flex;gap:10px;overflow-x:auto;
+  padding:2px 16px 12px;scrollbar-width:none}
+.boosts::-webkit-scrollbar{display:none}
+.boost{flex:0 0 auto;width:104px;padding:11px 9px 10px;border-radius:18px;cursor:pointer;
+  text-align:center;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.02));
+  border:1px solid var(--glass-brd);backdrop-filter:blur(16px);
+  box-shadow:0 8px 22px -10px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.1);
+  transition:transform .16s cubic-bezier(.34,1.6,.64,1),border-color .2s;
+  color:#fff;font-family:inherit}
+.boost:active{transform:scale(.94)}
+.boost.affordable{border-color:rgba(255,200,60,.45);
+  box-shadow:0 8px 26px -8px rgba(255,180,40,.45),inset 0 1px 0 rgba(255,255,255,.14)}
+.boost.affordable .b-cost{color:#ffd24a}
+.b-ico{font-size:22px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(255,200,60,.5))}
+.b-name{font-size:11px;font-weight:700;color:#dfe6fa;margin-bottom:2px;white-space:nowrap}
+.b-lv{font-size:9.5px;color:#7d8ab0;font-weight:600;margin-bottom:6px}
+.b-cost{font-size:11px;font-weight:800;color:#8fa0c4;display:flex;align-items:center;
+  justify-content:center;gap:3px;padding:3px 0;border-radius:9px;background:rgba(0,0,0,.28)}
+.b-cost .c{font-size:9px}
+.nav{position:relative;z-index:4;display:flex;justify-content:space-around;align-items:center;
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(10,14,28,.35),rgba(6,8,16,.95));
+  border-top:1px solid rgba(255,255,255,.07);backdrop-filter:blur(20px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;
+  border:none;color:#5f6b8c;font-family:inherit;font-size:10px;font-weight:700;
+  cursor:pointer;padding:6px 0;transition:color .22s}
+.nav-item .ni{font-size:19px;line-height:1;transition:transform .25s,filter .25s}
+.nav-item.active{color:#ffd24a}
+.nav-item.active .ni{transform:translateY(-3px) scale(1.14);filter:drop-shadow(0 0 10px rgba(255,200,60,.85))}
+.nav-item:active{transform:scale(.93)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);
+  padding:11px 20px;border-radius:14px;font-size:13px;font-weight:700;
+  background:rgba(20,26,46,.95);border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 16px 40px rgba(0,0,0,.7);backdrop-filter:blur(16px);
+  opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.9,.3,1);
+  z-index:100;white-space:nowrap;color:#fff}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.ok{border-color:rgba(74,227,255,.5);color:#9ff0ff}
+.toast.err{border-color:rgba(255,90,90,.5);color:#ffb3b3}
+</style>
 </head>
 <body>
-  <div class="visa-page" id="visaPage">
-    <div class="visa-frame">
-      
-      <div class="visa-header">
-        <button class="page-close-btn" id="visaBackBtn">&times;</button>
-        <h1>بطاقة Visa</h1>
-        <p>بطاقتك الذكية للدفع حول العالم</p>
-      </div>
 
-      <div class="visa-carousel fade-in">
-        <div class="carousel-container" id="carouselContainer"></div>
-        <div class="carousel-dots" id="carouselDots"></div>
+<div class="app">
+  <header class="topbar">
+    <div class="user">
+      <div class="avatar" id="avatarEl">👤</div>
+      <div>
+        <div class="uname" id="unameEl">لاعب مجهول</div>
+        <div class="urank">🥉 برونزي</div>
       </div>
+    </div>
+    <button class="icon-btn" id="soundBtn" title="الصوت">🔊</button>
+  </header>
 
-      <div class="quick-actions">
-        <div class="action-item" id="freezeCard">
-          <div class="action-icon freeze">
-            <i class="fas fa-snowflake"></i>
-          </div>
-          <div class="action-text">تجميد البطاقة</div>
-        </div>
-        <div class="action-item" id="viewTransactions">
-          <div class="action-icon transactions">
-            <i class="fas fa-exchange-alt"></i>
-          </div>
-          <div class="action-text">المعاملات</div>
-        </div>
-      </div>
+  <div class="hud">
+    <div class="balance-row">
+      <div class="coin-mini">◈</div>
+      <div class="balance" id="balanceEl">0</div>
+    </div>
+    <div class="profit"><span class="dot"></span> +<span id="profitEl">0</span> / ساعة</div>
+  </div>
 
-      <div class="card-details-section fade-in" id="cardDetailsSection">
-        <div class="section-title">
-          <i class="fas fa-info-circle"></i>
-          تفاصيل البطاقة
-          <button class="refresh-balance-btn" id="refreshBalanceBtn" title="تحديث الرصيد">
-            <i class="fas fa-sync-alt"></i>
-          </button>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label"><i class="fas fa-wallet"></i> الرصيد المتاح (USDT)</div>
-          <div class="detail-value positive" id="cardBalance">0.00</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label"><i class="fas fa-credit-card"></i> نوع البطاقة</div>
-          <div class="detail-value" id="cardType">Visa Platinum</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label"><i class="fas fa-calendar-alt"></i> تاريخ الإصدار</div>
-          <div class="detail-value" id="cardIssueDate">08/2023</div>
-        </div>
-        <div class="detail-item">
-          <div class="detail-label"><i class="fas fa-globe"></i> الحالة</div>
-          <div class="detail-value warning" id="cardStatus"><i class="fas fa-hourglass-half"></i> قيد الانتظار</div>
-        </div>
-      </div>
-
-      <div class="action-buttons fade-in">
-        <button class="visa-btn primary" id="requestNewCard">
-          <i class="fas fa-plus-circle"></i> ترقبوا التفعيل القادم للبطاقات
-        </button>
-      </div>
-
-      <div class="bottom-action fade-in">
-        <button class="visa-btn secondary" id="manageLimits">
-          <i class="fas fa-sliders-h"></i> إدارة الحدود
-        </button>
-      </div>
-
+  <div class="tap-area" id="tapArea">
+    <div class="coin-wrap">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="coin" id="coin"><span class="symbol">◈</span></div>
     </div>
   </div>
 
-  <div class="loading-spinner" id="loadingSpinner">
-    <div class="spinner"></div>
+  <div class="energy-wrap" id="energyWrap">
+    <div class="energy-top">
+      <span class="lbl">⚡ الطاقة</span>
+      <span class="val" id="energyText">1000 / 1000</span>
+    </div>
+    <div class="energy-bar"><div class="energy-fill" id="energyFill"></div></div>
   </div>
 
-  <script>
-    // ========== تهيئة Firebase (التكوين المقدم) ==========
-    const firebaseConfig = {
-      apiKey: "AIzaSyBX8v0qIVjG-Z46fVDeEUDKcPxa_FQF9Qc",
-      authDomain: "bnak-belaiba.firebaseapp.com",
-      projectId: "bnak-belaiba",
-      storageBucket: "bnak-belaiba.firebasestorage.app",
-      messagingSenderId: "286736432059",
-      appId: "1:286736432059:web:ec1ed4292850f00008229e"
+  <div class="boosts" id="boosts">
+    <button class="boost" data-key="multi">
+      <div class="b-ico">👆</div><div class="b-name">نقرة قوية</div>
+      <div class="b-lv">مستوى <span data-lv>1</span></div>
+      <div class="b-cost"><span class="c">◈</span><span data-cost>150</span></div>
+    </button>
+    <button class="boost" data-key="energy">
+      <div class="b-ico">🔋</div><div class="b-name">طاقة قصوى</div>
+      <div class="b-lv">مستوى <span data-lv>1</span></div>
+      <div class="b-cost"><span class="c">◈</span><span data-cost>250</span></div>
+    </button>
+    <button class="boost" data-key="regen">
+      <div class="b-ico">⚡</div><div class="b-name">شحن سريع</div>
+      <div class="b-lv">مستوى <span data-lv>1</span></div>
+      <div class="b-cost"><span class="c">◈</span><span data-cost>400</span></div>
+    </button>
+    <button class="boost" data-key="auto">
+      <div class="b-ico">🤖</div><div class="b-name">روبوت تعدين</div>
+      <div class="b-lv">مستوى <span data-lv>1</span></div>
+      <div class="b-cost"><span class="c">◈</span><span data-cost>600</span></div>
+    </button>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" data-nav="home"><span class="ni">🪙</span>الرئيسية</button>
+    <button class="nav-item" data-nav="tasks"><span class="ni">🎯</span>المهام</button>
+    <button class="nav-item" data-nav="friends"><span class="ni">👥</span>الأصدقاء</button>
+    <button class="nav-item" data-nav="wallet"><span class="ni">💳</span>المحفظة</button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==========================================================
+   CoinTap — CloudStorage Edition
+   البيانات تُحفظ في سحابة تلغرام (أو localStorage كبديل)
+   ========================================================== */
+
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- Telegram WebApp ---------- */
+const tg = window.Telegram?.WebApp;
+const hasCloud = !!tg?.CloudStorage;
+
+if(tg){
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0b0f22');
+  tg.setBackgroundColor('#05060d');
+  // عرض اسم المستخدم الحقيقي
+  const u = tg.initDataUnsafe?.user;
+  if(u){
+    $('#unameEl').textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'لاعب';
+    if(u.photo_url){
+      $('#avatarEl').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;border-radius:14px;object-fit:cover">`;
+    } else {
+      $('#avatarEl').textContent = (u.first_name || '👤').charAt(0).toUpperCase();
+    }
+  }
+}
+
+/* ---------- State ---------- */
+const DEFAULT = {
+  balance: 0, energy: 1000, maxEnergy: 1000,
+  multiTap: 1, regen: 3, passive: 0,
+  lv: { multi: 1, energy: 1, regen: 1, auto: 1 }
+};
+
+const KEY = 'cointap_v1';
+let S = structuredClone(DEFAULT);
+
+/* ---------- CloudStorage helpers (Promise wrappers) ---------- */
+function tgGet(key){
+  return new Promise((res, rej) => {
+    tg.CloudStorage.getItem(key, (err, val) => err ? rej(err) : res(val));
+  });
+}
+function tgSet(key, val){
+  return new Promise((res, rej) => {
+    tg.CloudStorage.setItem(key, val, (err) => err ? rej(err) : res());
+  });
+}
+
+/* ---------- Load ---------- */
+async function loadState(){
+  // 1) CloudStorage
+  if(hasCloud){
+    try{
+      const raw = await tgGet(KEY);
+      if(raw){
+        const d = JSON.parse(raw);
+        return { ...structuredClone(DEFAULT), ...d, lv: { ...DEFAULT.lv, ...(d.lv||{}) } };
+      }
+    }catch(e){ console.warn('CloudStorage load failed:', e); }
+  }
+  // 2) Fallback localStorage
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      return { ...structuredClone(DEFAULT), ...d, lv: { ...DEFAULT.lv, ...(d.lv||{}) } };
+    }
+  }catch(e){}
+  return structuredClone(DEFAULT);
+}
+
+/* ---------- Save (debounced + coalesced) ---------- */
+let saving = false, needsSave = false, saveTimer = null;
+
+async function doSave(){
+  if(saving){ needsSave = true; return; }
+  saving = true;
+  const raw = JSON.stringify(S);
+  try{
+    if(hasCloud) await tgSet(KEY, raw);
+    try{ localStorage.setItem(KEY, raw); }catch(e){}
+  }catch(e){
+    console.warn('CloudStorage save failed:', e);
+    try{ localStorage.setItem(KEY, raw); }catch(e){}
+  }finally{
+    saving = false;
+    if(needsSave){ needsSave = false; setTimeout(doSave, 250); }
+  }
+}
+
+function save(immediate = false){
+  if(immediate){ clearTimeout(saveTimer); doSave(); return; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 800);
+}
+
+/* ---------- Costs ---------- */
+const COST = {
+  multi:  lv => Math.floor(150 * Math.pow(1.75, lv - 1)),
+  energy: lv => Math.floor(250 * Math.pow(1.6,  lv - 1)),
+  regen:  lv => Math.floor(400 * Math.pow(1.65, lv - 1)),
+  auto:   lv => Math.floor(600 * Math.pow(1.7,  lv - 1))
+};
+
+/* ---------- Formatting ---------- */
+function fmt(n){
+  n = Math.floor(n);
+  if(n < 1000) return n.toLocaleString('en-US');
+  if(n < 1e6)  return (n/1e3).toFixed(2).replace(/\.?0+$/,'') + 'K';
+  if(n < 1e9)  return (n/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
+  if(n < 1e12) return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + 'B';
+  return (n/1e12).toFixed(2).replace(/\.?0+$/,'') + 'T';
+}
+
+/* ---------- Elements ---------- */
+const balanceEl  = $('#balanceEl');
+const profitEl   = $('#profitEl');
+const energyText = $('#energyText');
+const energyFill = $('#energyFill');
+const energyWrap = $('#energyWrap');
+const coinEl     = $('#coin');
+const tapArea    = $('#tapArea');
+const toastEl    = $('#toast');
+
+/* ---------- Render ---------- */
+function render(){
+  balanceEl.textContent = fmt(S.balance);
+  profitEl.textContent  = fmt(S.passive * 3600);
+  const pct = Math.max(0, Math.min(1, S.energy / S.maxEnergy));
+  energyFill.style.width = (pct * 100) + '%';
+  energyText.textContent = `${Math.floor(S.energy)} / ${fmt(S.maxEnergy)}`;
+  energyWrap.classList.toggle('low', pct < 0.2);
+  $$('.boost').forEach(btn => {
+    const key = btn.dataset.key;
+    const lv  = S.lv[key];
+    btn.querySelector('[data-lv]').textContent   = lv;
+    btn.querySelector('[data-cost]').textContent = fmt(COST[key](lv));
+    btn.classList.toggle('affordable', S.balance >= COST[key](lv));
+  });
+}
+
+/* ---------- Toast ---------- */
+let toastTimer;
+function toast(msg, type = ''){
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.className = 'toast ' + type, 1700);
+}
+
+/* ---------- Haptics ---------- */
+function haptic(ms = 8){
+  if(tg?.HapticFeedback){
+    try{ tg.HapticFeedback.impactOccurred('light'); return; }catch(e){}
+  }
+  if(navigator.vibrate) navigator.vibrate(ms);
+}
+
+/* ---------- Sound ---------- */
+let audioCtx = null, soundOn = true;
+function blip(freq = 620, dur = 0.07, type = 'sine', vol = 0.06){
+  if(!soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(freq * 0.65, audioCtx.currentTime + dur);
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+
+/* ---------- Tap effects ---------- */
+function spawnFloat(x, y, amount){
+  const el = document.createElement('div');
+  el.className = 'float';
+  el.textContent = '+' + amount;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  el.style.fontSize = (20 + Math.min(10, S.multiTap)) + 'px';
+  tapArea.appendChild(el);
+  setTimeout(() => el.remove(), 950);
+}
+function spawnRipple(x, y){
+  const el = document.createElement('div');
+  el.className = 'ripple';
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  tapArea.appendChild(el);
+  setTimeout(() => el.remove(), 620);
+}
+function spawnSparks(x, y){
+  for(let i = 0; i < 5; i++){
+    const el = document.createElement('div');
+    el.className = 'spark';
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    tapArea.appendChild(el);
+    const angle = Math.random() * Math.PI * 2;
+    const dist  = 34 + Math.random() * 46;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+    el.animate([
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }
+    ], { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.4,1)' });
+    setTimeout(() => el.remove(), 760);
+  }
+}
+
+/* ---------- Core tap ---------- */
+let lastTap = 0;
+function doTap(clientX, clientY){
+  const rect = tapArea.getBoundingClientRect();
+  if(S.energy < 1){
+    energyWrap.classList.add('shake');
+    setTimeout(() => energyWrap.classList.remove('shake'), 380);
+    haptic([18, 40, 18]);
+    toast('⚡ الطاقة نفدت، انتظر قليلاً', 'err');
+    return;
+  }
+  S.energy -= 1;
+  const gain = S.multiTap;
+  S.balance += gain;
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  spawnFloat(x, y, gain);
+  spawnRipple(x, y);
+  spawnSparks(x, y);
+  coinEl.classList.add('pressed');
+  setTimeout(() => coinEl.classList.remove('pressed'), 90);
+  haptic(8);
+  const now = performance.now();
+  if(now - lastTap > 55) blip(560 + Math.random() * 140, 0.06, 'sine', 0.045);
+  lastTap = now;
+  render();
+}
+
+tapArea.addEventListener('pointerdown', e => {
+  if(e.button !== undefined && e.button !== 0) return;
+  doTap(e.clientX, e.clientY);
+});
+tapArea.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+/* ---------- Boosts ---------- */
+$$('.boost').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key  = btn.dataset.key;
+    const lv   = S.lv[key];
+    const cost = COST[key](lv);
+    if(S.balance < cost){
+      haptic([15, 50, 15]);
+      toast('◈ رصيدك غير كافٍ', 'err');
+      btn.animate(
+        [{ transform:'translateX(0)' },{ transform:'translateX(-6px)' },
+         { transform:'translateX(6px)' },{ transform:'translateX(0)' }],
+        { duration: 300 }
+      );
+      return;
+    }
+    S.balance -= cost;
+    S.lv[key]++;
+    switch(key){
+      case 'multi':  S.multiTap  += 1; break;
+      case 'energy': S.maxEnergy += 500; S.energy += 500; break;
+      case 'regen':  S.regen     += 2; break;
+      case 'auto':   S.passive   += 5; break;
+    }
+    haptic([10, 30, 10]);
+    blip(880, 0.12, 'triangle', 0.06);
+    toast('✅ تم الترقية بنجاح!', 'ok');
+    btn.animate(
+      [{ transform:'scale(1)' },{ transform:'scale(1.1)' },{ transform:'scale(1)' }],
+      { duration: 320, easing: 'cubic-bezier(.34,1.6,.64,1)' }
+    );
+    render();
+    save(true); // حفظ فوري بعد شراء ترقية
+  });
+});
+
+/* ---------- Bottom nav ---------- */
+$$('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    $$('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    haptic(6);
+    blip(420, 0.05, 'square', 0.03);
+    const map = {
+      home:    '🏠 الرئيسية',
+      tasks:   '🎯 المهام — قريباً',
+      friends: '👥 الأصدقاء — قريباً',
+      wallet:  '💳 المحفظة — قريباً'
     };
+    const key = item.dataset.nav;
+    if(key !== 'home') toast(map[key]);
+  });
+});
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+/* ---------- Sound toggle ---------- */
+$('#soundBtn').addEventListener('click', e => {
+  soundOn = !soundOn;
+  e.currentTarget.textContent = soundOn ? '🔊' : '🔇';
+  haptic(8);
+  if(soundOn) blip(700, 0.08);
+});
 
-    const cardsData = [
-      {
-        id: 'visa_platinum_main',
-        type: 'PLATINUM',
-        number: '4592 8732 6451 4592',
-        holder: 'AKRAM KHEZZARI',
-        expiry: '08/27',
-        cvv: '328',
-        balance: 0.00,
-        issueDate: '08/2023',
-        status: 'pending',
-        backgroundFront: 'linear-gradient(135deg, #1a1f71, #3a3fb3)',
-        backgroundBack: 'linear-gradient(135deg, #3a3fb3, #1a1f71)',
-        textColor: 'white',
-        chipColor: '#f0b90b'
-      },
-      {
-        id: 'visa_gold',
-        type: 'GOLD',
-        number: '4823 9102 3746 3821',
-        holder: 'AKRAM KHEZZARI',
-        expiry: '12/26',
-        cvv: '561',
-        balance: 0.00,
-        issueDate: '12/2022',
-        status: 'pending',
-        backgroundFront: 'linear-gradient(135deg, #f0b90b, #ffd700)',
-        backgroundBack: 'linear-gradient(135deg, #ffd700, #f0b90b)',
-        textColor: '#333',
-        chipColor: '#b8860b'
-      },
-      {
-        id: 'visa_virtual',
-        type: 'VIRTUAL',
-        number: '4532 7890 1245 7743',
-        holder: 'AKRAM KHEZZARI',
-        expiry: '03/28',
-        cvv: '902',
-        balance: 0.00,
-        issueDate: '03/2024',
-        status: 'pending',
-        backgroundFront: 'linear-gradient(135deg, #26a17b, #2dcc9e)',
-        backgroundBack: 'linear-gradient(135deg, #2dcc9e, #26a17b)',
-        textColor: 'white',
-        chipColor: '#f0b90b'
-      },
-      {
-        id: 'visa_platinum_extra',
-        type: 'PLATINUM',
-        number: '4916 2387 5643 5698',
-        holder: 'AKRAM KHEZZARI',
-        expiry: '09/29',
-        cvv: '447',
-        balance: 0.00,
-        issueDate: '09/2025',
-        status: 'pending',
-        backgroundFront: 'linear-gradient(135deg, #e5e4e2, #ffffff)',
-        backgroundBack: 'linear-gradient(135deg, #ffffff, #e5e4e2)',
-        textColor: '#333',
-        chipColor: '#b0b0b0'
-      }
-    ];
+/* ---------- Game loop ---------- */
+let acc = 0;
+setInterval(() => {
+  if(S.energy < S.maxEnergy){
+    S.energy = Math.min(S.maxEnergy, S.energy + S.regen / 10);
+  }
+  if(S.passive > 0){
+    S.balance += S.passive / 10;
+  }
+  acc++;
+  render();
+  // حفظ كل 10 ثوانٍ (بدلاً من 3) لتقليل استدعاءات CloudStorage
+  if(acc % 100 === 0) save();
+}, 100);
 
-    let currentUser = {
-      firstName: 'Akram',
-      lastName: 'Khezzari',
-      id: null
-    };
-    let currentCardIndex = 0;
-    let touchStartX = 0;
-    let touchEndX = 0;
-    const SWIPE_THRESHOLD = 70;
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) save(true);
+});
+window.addEventListener('beforeunload', save);
 
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('🚀 تهيئة الصفحة');
-      
-      initializeUserData();
-      updateCardHolders();
-      renderCarousel();
-      setupEventListeners();
-      
-      fetchUSDTBalance();
-    });
-
-    function initializeUserData() {
-      try {
-        if (window.Telegram && Telegram.WebApp) {
-          const tg = Telegram.WebApp;
-          const user = tg.initDataUnsafe.user;
-          if (user && user.id) {
-            currentUser.firstName = user.first_name || currentUser.firstName;
-            currentUser.lastName = user.last_name || currentUser.lastName;
-            currentUser.id = user.id;
-            console.log('✅ مستخدم تليغرام:', currentUser.id);
-          }
-        }
-      } catch (error) {
-        console.error('❌ خطأ في قراءة بيانات Telegram:', error);
-      }
-      
-      if (!currentUser.id) {
-        currentUser.id = '123456789';
-        console.warn('⚠️ استخدام معرف افتراضي:', currentUser.id);
-      }
-    }
-
-    function updateCardHolders() {
-      const fullName = `${currentUser.firstName.toUpperCase()} ${currentUser.lastName.toUpperCase()}`;
-      cardsData.forEach(card => {
-        card.holder = fullName;
-      });
-    }
-
-    async function fetchUSDTBalance() {
-      if (!currentUser.id) {
-        console.error('❌ لا يوجد معرف مستخدم');
-        showToast('معرف المستخدم غير موجود', 'error');
-        return;
-      }
-
-      console.log('🔍 بدء البحث عن رصيد USDT للمستخدم:', currentUser.id);
-      showLoading(true);
-
-      let balanceFound = false;
-      let balanceValue = 0;
-      let source = '';
-
-      try {
-        const balanceRef = db.collection('balances').doc(String(currentUser.id));
-        const balanceSnap = await balanceRef.get();
-        
-        if (balanceSnap.exists) {
-          const data = balanceSnap.data();
-          console.log('   📄 بيانات balances:', JSON.stringify(data, null, 2));
-          
-          if (data.wallets && typeof data.wallets === 'object') {
-            if (data.wallets.USDT !== undefined) {
-              balanceValue = data.wallets.USDT;
-              balanceFound = true;
-              source = 'balances/{id}.wallets.USDT';
-            } else if (data.wallets.usdt !== undefined) {
-              balanceValue = data.wallets.usdt;
-              balanceFound = true;
-              source = 'balances/{id}.wallets.usdt';
-            }
-          }
-          
-          if (!balanceFound && data.usdtBalance !== undefined) {
-            balanceValue = data.usdtBalance;
-            balanceFound = true;
-            source = 'balances/{id}.usdtBalance';
-          }
-        } else {
-          console.log('   ❌ مستند balances غير موجود');
-        }
-
-        if (!balanceFound) {
-          console.log('2. محاولة مجموعة wallets (شرط userId + currency == USDT)');
-          const walletsQuery = await db.collection('wallets')
-            .where('userId', '==', String(currentUser.id))
-            .where('currency', '==', 'USDT')
-            .limit(1)
-            .get();
-          
-          if (!walletsQuery.empty) {
-            const doc = walletsQuery.docs[0];
-            const data = doc.data();
-            console.log('   📄 بيانات wallet:', JSON.stringify(data, null, 2));
-            balanceValue = data.balance || data.amount || 0;
-            balanceFound = true;
-            source = 'wallets (userId + currency=USDT)';
-          } else {
-            console.log('   ❌ لا توجد محفظة بهذا userId و currency=USDT');
-          }
-        }
-
-        if (!balanceFound) {
-          console.log('3. محاولة مجموعة wallets (أول محفظة للمستخدم)');
-          const anyWalletQuery = await db.collection('wallets')
-            .where('userId', '==', String(currentUser.id))
-            .limit(1)
-            .get();
-          
-          if (!anyWalletQuery.empty) {
-            const doc = anyWalletQuery.docs[0];
-            const data = doc.data();
-            console.log('   📄 بيانات أول wallet:', JSON.stringify(data, null, 2));
-            balanceValue = data.balance || data.amount || 0;
-            balanceFound = true;
-            source = 'wallets (أول محفظة)';
-          } else {
-            console.log('   ❌ لا توجد أي محفظة للمستخدم');
-          }
-        }
-
-        if (!balanceFound) {
-          console.log('4. محاولة الاستعلام عن balances حيث userId == ' + currentUser.id);
-          const balanceQuery = await db.collection('balances')
-            .where('userId', '==', String(currentUser.id))
-            .limit(1)
-            .get();
-          
-          if (!balanceQuery.empty) {
-            const doc = balanceQuery.docs[0];
-            const data = doc.data();
-            console.log('   📄 بيانات balances (استعلام):', JSON.stringify(data, null, 2));
-            if (data.wallets && data.wallets.USDT !== undefined) {
-              balanceValue = data.wallets.USDT;
-              balanceFound = true;
-              source = 'balances (استعلام) .wallets.USDT';
-            } else if (data.usdtBalance !== undefined) {
-              balanceValue = data.usdtBalance;
-              balanceFound = true;
-              source = 'balances (استعلام) .usdtBalance';
-            }
-          } else {
-            console.log('   ❌ لا توجد مستندات balances تطابق userId');
-          }
-        }
-
-        if (!balanceFound) {
-          console.log('5. محاولة balances/' + currentUser.id + '/wallets where currency == USDT');
-          const subWalletsQuery = await db.collection('balances')
-            .doc(String(currentUser.id))
-            .collection('wallets')
-            .where('currency', '==', 'USDT')
-            .limit(1)
-            .get();
-          
-          if (!subWalletsQuery.empty) {
-            const doc = subWalletsQuery.docs[0];
-            const data = doc.data();
-            console.log('   📄 بيانات subcollection wallet:', JSON.stringify(data, null, 2));
-            balanceValue = data.balance || data.amount || 0;
-            balanceFound = true;
-            source = 'balances/{id}/wallets (subcollection)';
-          } else {
-            console.log('   ❌ لا توجد محفظة في subcollection');
-          }
-        }
-
-        if (!balanceFound) {
-          console.log('6. محاولة users/' + currentUser.id + '/wallets where currency == USDT');
-          const userWalletsQuery = await db.collection('users')
-            .doc(String(currentUser.id))
-            .collection('wallets')
-            .where('currency', '==', 'USDT')
-            .limit(1)
-            .get();
-          
-          if (!userWalletsQuery.empty) {
-            const doc = userWalletsQuery.docs[0];
-            const data = doc.data();
-            console.log('   📄 بيانات users/{id}/wallets:', JSON.stringify(data, null, 2));
-            balanceValue = data.balance || data.amount || 0;
-            balanceFound = true;
-            source = 'users/{id}/wallets (subcollection)';
-          } else {
-            console.log('   ❌ لا توجد محفظة في users/{id}/wallets');
-          }
-        }
-
-        if (balanceFound) {
-          const numericBalance = parseFloat(balanceValue);
-          if (!isNaN(numericBalance)) {
-            updateAllCardsBalance(numericBalance);
-            showToast(`✅ تم تحديث الرصيد: ${numericBalance.toFixed(2)} USDT (via ${source})`, 'success');
-            console.log(`🎉 نجاح: الرصيد = ${numericBalance} من ${source}`);
-          } else {
-            console.error('❌ قيمة الرصيد غير صالحة:', balanceValue);
-            showToast('⚠️ قيمة الرصيد غير صالحة', 'warning');
-          }
-        } else {
-          console.warn('⚠️ لم يتم العثور على أي رصيد بعد جميع المحاولات');
-          showToast('⚠️ لم يتم العثور على رصيد USDT في Firebase', 'warning');
-        }
-
-      } catch (error) {
-        console.error('🔥 خطأ في جلب الرصيد:', error);
-        showToast('فشل تحميل الرصيد: ' + error.message, 'error');
-      } finally {
-        showLoading(false);
-        updateCardDetails();
-      }
-    }
-
-    function updateAllCardsBalance(balance) {
-      cardsData.forEach(card => {
-        card.balance = balance;
-      });
-    }
-
-    function renderCarousel() {
-      renderCurrentCard();
-      renderDots();
-    }
-
-    function renderCurrentCard() {
-      const container = document.getElementById('carouselContainer');
-      if (!container) return;
-      
-      const card = cardsData[currentCardIndex];
-      const cardHTML = generateCardHTML(card);
-      container.innerHTML = cardHTML;
-      
-      const cardInner = container.querySelector('.card-inner');
-      if (cardInner) {
-        cardInner.addEventListener('click', function(e) {
-          this.classList.toggle('flipped');
-        });
-      }
-    }
-
-    function generateCardHTML(card) {
-      const lastFour = card.number.slice(-4);
-      const displayNumber = `**** **** **** ${lastFour}`;
-      
-      return `
-        <div class="main-visa-card">
-          <div class="card-inner">
-            <div class="card-front" style="background: ${card.backgroundFront}; color: ${card.textColor};">
-              <div class="card-chip" style="background: linear-gradient(135deg, ${card.chipColor}, ${card.chipColor}dd);"></div>
-              <div class="card-logo">
-                <div class="visa-logo" style="color: ${card.textColor};">VISA</div>
-                <div class="card-type" style="color: ${card.textColor};">${card.type}</div>
-              </div>
-              <div class="card-number" style="color: ${card.textColor};">${displayNumber}</div>
-              <div class="card-details">
-                <div class="card-holder">
-                  <div class="card-label" style="color: ${card.textColor};">حامل البطاقة</div>
-                  <div class="card-value" style="color: ${card.textColor};">${card.holder}</div>
-                </div>
-                <div class="card-expiry">
-                  <div class="card-label" style="color: ${card.textColor};">صالحة حتى</div>
-                  <div class="card-value" style="color: ${card.textColor};">${card.expiry}</div>
-                </div>
-              </div>
-              <div class="card-shine"></div>
-            </div>
-            <div class="card-back" style="background: ${card.backgroundBack}; color: ${card.textColor};">
-              <div class="magnetic-stripe"></div>
-              <div class="cvv-section">
-                <div class="cvv-label">رمز الأمان (CVV)</div>
-                <div class="cvv-number">${card.cvv}</div>
-              </div>
-              <div class="notice" style="color: ${card.textColor};">
-                توقيع حامل البطاقة مطلوب. غير صالحة ما لم تكن موقعة.
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderDots() {
-      const dotsContainer = document.getElementById('carouselDots');
-      if (!dotsContainer) return;
-      
-      let dotsHTML = '';
-      cardsData.forEach((_, index) => {
-        const activeClass = index === currentCardIndex ? 'active' : '';
-        dotsHTML += `<button class="dot ${activeClass}" data-index="${index}"></button>`;
-      });
-      dotsContainer.innerHTML = dotsHTML;
-      
-      dotsContainer.querySelectorAll('.dot').forEach(dot => {
-        dot.addEventListener('click', function(e) {
-          e.stopPropagation();
-          const index = parseInt(this.dataset.index);
-          if (!isNaN(index) && index !== currentCardIndex) {
-            currentCardIndex = index;
-            renderCarousel();
-            updateCardDetails();
-          }
-        });
-      });
-    }
-
-    function updateCardDetails() {
-      const card = cardsData[currentCardIndex];
-      document.getElementById('cardBalance').textContent = `${card.balance.toFixed(2)} USDT`;
-      document.getElementById('cardType').textContent = `Visa ${card.type}`;
-      document.getElementById('cardIssueDate').textContent = card.issueDate || '08/2023';
-      
-      const statusEl = document.getElementById('cardStatus');
-      if (card.status === 'pending') {
-        statusEl.innerHTML = '<i class="fas fa-hourglass-half"></i> قيد الانتظار';
-        statusEl.className = 'detail-value warning';
-      } else if (card.status === 'active') {
-        statusEl.innerHTML = '<i class="fas fa-check-circle"></i> نشطة';
-        statusEl.className = 'detail-value positive';
-      } else {
-        statusEl.innerHTML = '<i class="fas fa-ban"></i> مجمدة';
-        statusEl.className = 'detail-value warning';
-      }
-    }
-
-    function setupEventListeners() {
-      document.getElementById('visaBackBtn').addEventListener('click', goBack);
-      document.getElementById('freezeCard').addEventListener('click', toggleFreezeCard);
-      document.getElementById('viewTransactions').addEventListener('click', viewAllTransactions);
-      document.getElementById('requestNewCard').addEventListener('click', requestNewCard);
-      document.getElementById('manageLimits').addEventListener('click', manageLimits);
-      
-      document.getElementById('refreshBalanceBtn').addEventListener('click', function() {
-        fetchUSDTBalance();
-      });
-      
-      const carouselContainer = document.getElementById('carouselContainer');
-      
-      carouselContainer.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-      }, { passive: true });
-      
-      carouselContainer.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-      }, { passive: true });
-      
-      let isMouseDown = false;
-      carouselContainer.addEventListener('mousedown', (e) => {
-        isMouseDown = true;
-        touchStartX = e.screenX;
-        e.preventDefault();
-      });
-      
-      carouselContainer.addEventListener('mousemove', (e) => {
-        if (!isMouseDown) return;
-        touchEndX = e.screenX;
-      });
-      
-      carouselContainer.addEventListener('mouseup', (e) => {
-        if (isMouseDown) {
-          touchEndX = e.screenX;
-          handleSwipe();
-          isMouseDown = false;
-        }
-      });
-      
-      carouselContainer.addEventListener('mouseleave', () => {
-        isMouseDown = false;
-      });
-    }
-
-    function handleSwipe() {
-      const diff = touchStartX - touchEndX;
-      if (Math.abs(diff) < SWIPE_THRESHOLD) return;
-      
-      if (diff > 0) {
-        if (currentCardIndex < cardsData.length - 1) {
-          currentCardIndex++;
-        } else {
-          showToast('هذه آخر بطاقة', 'info');
-          return;
-        }
-      } else {
-        if (currentCardIndex > 0) {
-          currentCardIndex--;
-        } else {
-          showToast('هذه أول بطاقة', 'info');
-          return;
-        }
-      }
-      
-      renderCarousel();
-      updateCardDetails();
-    }
-
-    function toggleFreezeCard() {
-      const card = cardsData[currentCardIndex];
-      const freezeBtn = document.getElementById('freezeCard');
-      const icon = freezeBtn.querySelector('.action-icon');
-      const text = freezeBtn.querySelector('.action-text');
-      
-      if (card.status === 'active' || card.status === 'pending') {
-        card.status = 'frozen';
-        card.backgroundFront = 'linear-gradient(135deg, #6b7b8f, #4a5a6a)';
-        card.backgroundBack = 'linear-gradient(135deg, #4a5a6a, #6b7b8f)';
-        icon.style.background = 'linear-gradient(135deg, var(--danger), #ff6b81)';
-        icon.innerHTML = '<i class="fas fa-ban"></i>';
-        text.textContent = 'إلغاء التجميد';
-        showToast('تم تجميد البطاقة', 'warning');
-      } else {
-        card.status = 'pending';
-        const original = getOriginalCardStyle(card.id);
-        card.backgroundFront = original.backgroundFront;
-        card.backgroundBack = original.backgroundBack;
-        card.chipColor = original.chipColor;
-        card.textColor = original.textColor;
-        icon.style.background = 'linear-gradient(135deg, var(--warning), #ffb347)';
-        icon.innerHTML = '<i class="fas fa-snowflake"></i>';
-        text.textContent = 'تجميد البطاقة';
-        showToast('تم إلغاء تجميد البطاقة', 'success');
-      }
-      
-      renderCurrentCard();
-      updateCardDetails();
-    }
-
-    function getOriginalCardStyle(cardId) {
-      const originals = {
-        'visa_platinum_main': {
-          backgroundFront: 'linear-gradient(135deg, #1a1f71, #3a3fb3)',
-          backgroundBack: 'linear-gradient(135deg, #3a3fb3, #1a1f71)',
-          textColor: 'white',
-          chipColor: '#f0b90b'
-        },
-        'visa_gold': {
-          backgroundFront: 'linear-gradient(135deg, #f0b90b, #ffd700)',
-          backgroundBack: 'linear-gradient(135deg, #ffd700, #f0b90b)',
-          textColor: '#333',
-          chipColor: '#b8860b'
-        },
-        'visa_virtual': {
-          backgroundFront: 'linear-gradient(135deg, #26a17b, #2dcc9e)',
-          backgroundBack: 'linear-gradient(135deg, #2dcc9e, #26a17b)',
-          textColor: 'white',
-          chipColor: '#f0b90b'
-        },
-        'visa_platinum_extra': {
-          backgroundFront: 'linear-gradient(135deg, #e5e4e2, #ffffff)',
-          backgroundBack: 'linear-gradient(135deg, #ffffff, #e5e4e2)',
-          textColor: '#333',
-          chipColor: '#b0b0b0'
-        }
-      };
-      return originals[cardId] || originals['visa_platinum_main'];
-    }
-
-    function viewAllTransactions() {
-      showLoading(true);
-      setTimeout(() => {
-        showLoading(false);
-        showToast('جارٍ تحميل جميع المعاملات...', 'info');
-      }, 1000);
-    }
-
-    function requestNewCard() {
-      showLoading(true);
-      setTimeout(() => {
-        showLoading(false);
-        showToast('البطاقات قيد التفعيل قريباً، تابعنا!', 'success');
-      }, 2000);
-    }
-
-    function manageLimits() {
-      showToast('فتح صفحة إدارة حدود الإنفاق...', 'info');
-    }
-
-    function goBack() {
-      if (typeof showMainPage !== 'undefined') {
-        showMainPage();
-      } else {
-        window.history.back();
-      }
-    }
-
-    function showLoading(show) {
-      const spinner = document.getElementById('loadingSpinner');
-      if (spinner) {
-        spinner.style.display = show ? 'flex' : 'none';
-      }
-    }
-
-    function showToast(message, type = 'info') {
-      const existingToasts = document.querySelectorAll('.visa-toast');
-      existingToasts.forEach(toast => toast.remove());
-      
-      const toast = document.createElement('div');
-      toast.className = `visa-toast ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : ''}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.style.opacity = '0';
-          toast.style.transition = 'opacity 0.3s ease';
-          setTimeout(() => {
-            if (toast.parentNode) {
-              toast.remove();
-            }
-          }, 300);
-        }
-      }, 3000);
-    }
-
-    window.addEventListener('scroll', function() {
-      const fadeElements = document.querySelectorAll('.fade-in');
-      fadeElements.forEach(element => {
-        const elementTop = element.getBoundingClientRect().top;
-        const elementVisible = 150;
-        if (elementTop < window.innerHeight - elementVisible) {
-          element.style.opacity = "1";
-          element.style.transform = "translateY(0)";
-        }
-      });
-    });
-  </script>
+/* ---------- Init ---------- */
+(async () => {
+  S = await loadState();
+  render();
+  setTimeout(() => {
+    if(hasCloud) toast('☁️ البيانات محفوظة في سحابة تلغرام');
+    else toast('👆 اضغط على العملة لتبدأ الربح');
+  }, 700);
+})();
+</script>
 </body>
 </html>
