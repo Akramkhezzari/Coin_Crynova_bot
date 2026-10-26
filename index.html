@@ -3,586 +3,1418 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#05060d">
-<title>CoinTap — لعبة النقر</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="theme-color" content="#06060c">
+<title>NEXUS — Tap & Earn</title>
 <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
 :root{
-  --gold-2:#ffd24a;--gold-3:#f59e0b;
-  --glass:rgba(255,255,255,.055);
-  --glass-brd:rgba(255,255,255,.1);
-  --cs:clamp(150px,42vw,200px);
+  --bg:#06060c;
+  --card:rgba(255,255,255,.045);
+  --stroke:rgba(255,255,255,.08);
+  --mint:#00ffa3;
+  --cyan:#22d3ee;
+  --violet:#a855f7;
+  --txt:#f5f3ff;
+  --muted:#6b6880;
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;
-  user-select:none;-webkit-user-select:none;touch-action:manipulation}
-html,body{height:100%;overflow:hidden}
-body{font-family:'Cairo',system-ui,sans-serif;background:#05060d;color:#fff;
-  display:flex;justify-content:center;align-items:stretch}
-.app{position:relative;width:100%;max-width:440px;height:100dvh;display:flex;flex-direction:column;
-  overflow:hidden;padding-bottom:env(safe-area-inset-bottom);
-  background:
-    radial-gradient(120% 60% at 50% -10%, rgba(255,180,40,.22), transparent 55%),
-    radial-gradient(90% 50% at 8% 78%, rgba(60,200,255,.14), transparent 55%),
-    radial-gradient(90% 50% at 95% 60%, rgba(160,80,255,.12), transparent 55%),
-    linear-gradient(180deg,#0b0f22 0%,#070a15 45%,#04050c 100%)}
-.app::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background-image:
-    radial-gradient(1.4px 1.4px at 12% 18%, #fff, transparent),
-    radial-gradient(1.2px 1.2px at 78% 12%, #cfe7ff, transparent),
-    radial-gradient(1.6px 1.6px at 62% 32%, #ffe9b0, transparent),
-    radial-gradient(1.2px 1.2px at 28% 46%, #fff, transparent),
-    radial-gradient(1.4px 1.4px at 88% 58%, #d9c6ff, transparent),
-    radial-gradient(1.2px 1.2px at 40% 72%, #fff, transparent),
-    radial-gradient(1.4px 1.4px at 70% 84%, #b9e8ff, transparent);
-  animation:twinkle 5s ease-in-out infinite alternate}
-@keyframes twinkle{from{opacity:.25}to{opacity:.65}}
-.topbar{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;
-  padding:calc(env(safe-area-inset-top) + 12px) 16px 6px}
-.user{display:flex;align-items:center;gap:10px}
-.avatar{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;font-size:19px;
-  background:linear-gradient(145deg,#1e2647,#12172e);border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14)}
-.uname{font-size:14px;font-weight:700}
-.urank{font-size:11px;color:#ffd36b;font-weight:600;opacity:.9}
-.icon-btn{width:40px;height:40px;border-radius:14px;border:1px solid var(--glass-brd);
-  background:var(--glass);backdrop-filter:blur(14px);color:#cfd6ee;font-size:17px;
-  display:grid;place-items:center;cursor:pointer;transition:transform .15s}
-.icon-btn:active{transform:scale(.92)}
-.hud{position:relative;z-index:3;text-align:center;padding:8px 16px 0}
-.balance-row{display:flex;align-items:center;justify-content:center;gap:10px}
-.coin-mini{width:30px;height:30px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%, #fff6c9, #ffd24a 40%, #f59e0b 75%, #b45309);
-  box-shadow:0 0 16px rgba(255,180,40,.65),inset 0 -3px 6px rgba(120,60,0,.5);
-  display:grid;place-items:center;font-size:14px;color:#8a4b00;font-weight:900;
-  animation:coinSpin 6s linear infinite}
-@keyframes coinSpin{0%,80%{transform:rotateY(0)}90%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
-.balance{font-size:clamp(30px,9vw,42px);font-weight:900;letter-spacing:-1px;
-  background:linear-gradient(180deg,#ffffff,#ffe9a8 55%,#ffc23c);
+
+html,body{height:100%}
+body{
+  font-family:"Tajawal","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  background:#000;color:var(--txt);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
+}
+
+.app{
+  position:relative;
+  width:100%;max-width:440px;
+  height:100vh;height:100dvh;
+  max-height:920px;
+  background:linear-gradient(180deg,#08080f 0%,#06060c 50%,#0a0612 100%);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  box-shadow:0 0 0 1px rgba(255,255,255,.05),0 30px 90px rgba(0,0,0,.9);
+}
+@media(min-width:480px){.app{border-radius:36px}}
+
+.bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.aurora{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;animation:drift 22s ease-in-out infinite}
+.a1{width:320px;height:320px;background:radial-gradient(circle,#00ffa3,transparent 65%);top:-120px;right:-100px;opacity:.18}
+.a2{width:360px;height:360px;background:radial-gradient(circle,#a855f7,transparent 65%);bottom:-140px;left:-120px;opacity:.22;animation-delay:-8s}
+.a3{width:250px;height:250px;background:radial-gradient(circle,#22d3ee,transparent 65%);top:45%;left:55%;opacity:.10;animation-delay:-15s}
+@keyframes drift{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(30px,-30px) scale(1.18)}
+}
+.bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 0%,transparent 75%);
+  mask-image:radial-gradient(ellipse at 50% 40%,#000 0%,transparent 75%);
+}
+
+.header{
+  position:relative;z-index:5;
+  display:flex;align-items:center;gap:10px;
+  padding:calc(14px + env(safe-area-inset-top)) 16px 6px;
+}
+.profile{
+  flex:1;min-width:0;display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--stroke);
+  border-radius:16px;padding:7px 12px 7px 8px;
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.avatar{
+  width:38px;height:38px;flex:0 0 auto;border-radius:12px;
+  display:grid;place-items:center;font-size:19px;
+  background:linear-gradient(145deg,#00ffa3,#22d3ee);
+  box-shadow:0 4px 16px rgba(0,255,163,.35),inset 0 1px 0 rgba(255,255,255,.5);
+}
+.pinfo{min-width:0}
+.pname{
+  font-size:13px;font-weight:800;
+  display:flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.badge-pro{
+  font-size:8px;padding:1.5px 5px;border-radius:5px;font-weight:800;
+  background:linear-gradient(90deg,#00ffa3,#22d3ee);color:#042b1e;
+  letter-spacing:.5px;
+}
+.plevel{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:10px;color:var(--muted);font-weight:700}
+.xp-track{height:4px;width:60px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.xp-fill{
+  display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#00ffa3,#22d3ee);
+  transition:width .5s cubic-bezier(.3,1,.4,1);
+  box-shadow:0 0 8px rgba(0,255,163,.6);
+}
+.icon-btn{
+  width:42px;height:42px;flex:0 0 auto;border-radius:14px;
+  border:1px solid var(--stroke);background:var(--card);
+  font-size:17px;display:grid;place-items:center;cursor:pointer;
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  transition:transform .16s,background .2s;
+}
+.icon-btn:active{transform:scale(.9);background:rgba(255,255,255,.1)}
+
+.balance-block{
+  position:relative;z-index:5;
+  display:flex;flex-direction:column;align-items:center;
+  padding:6px 16px 2px;gap:4px;
+}
+.balance-main{display:flex;align-items:center;gap:10px}
+.balance-icon{
+  width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  font-size:15px;
+  background:linear-gradient(145deg,#00ffa3,#22d3ee);
+  box-shadow:0 0 20px rgba(0,255,163,.5),inset 0 -2px 4px rgba(0,60,40,.4);
+}
+.balance-num{
+  font-size:clamp(34px,10vw,48px);font-weight:900;letter-spacing:-1.5px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#ffffff 15%,#7fffd4 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 3px 14px rgba(255,180,40,.45));line-height:1.1}
-.profit{margin-top:2px;font-size:12px;font-weight:600;color:#8fe8ff;
-  display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;
-  background:rgba(74,227,255,.08);border:1px solid rgba(74,227,255,.18)}
-.profit .dot{width:6px;height:6px;border-radius:50%;background:#4ae3ff;
-  box-shadow:0 0 8px #4ae3ff;animation:blink 1.6s infinite}
-@keyframes blink{50%{opacity:.25}}
-.tap-area{position:relative;flex:1;display:grid;place-items:center;z-index:2;
-  overflow:hidden;min-height:0}
-.coin-wrap{position:relative;display:grid;place-items:center;
-  animation:coinFloat 3.4s ease-in-out infinite}
-@keyframes coinFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.ring{position:absolute;border-radius:50%;pointer-events:none;width:var(--cs);height:var(--cs);
-  border:1.5px solid rgba(255,200,80,.35);animation:ringPulse 3s ease-out infinite}
-.ring.r2{animation-delay:1.5s}
-@keyframes ringPulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
-.coin{width:var(--cs);height:var(--cs);border-radius:50%;position:relative;
-  display:grid;place-items:center;cursor:pointer;
-  background:radial-gradient(circle at 34% 28%, #fffbe0 0%, #ffe27a 22%, #ffc93c 48%, #f59e0b 72%, #a8500a 100%);
-  box-shadow:0 0 0 7px rgba(255,190,60,.10),0 0 55px rgba(255,168,20,.55),
-    0 26px 45px -12px rgba(0,0,0,.85),inset 0 -14px 28px rgba(120,50,0,.55),
-    inset 0 14px 26px rgba(255,255,255,.65);
-  transition:transform .07s cubic-bezier(.34,1.6,.64,1);will-change:transform}
-.coin.pressed{transform:scale(.92)}
-.coin::before{content:'';position:absolute;inset:11%;border-radius:50%;
-  border:2.5px solid rgba(255,255,255,.4);
-  box-shadow:inset 0 0 22px rgba(255,255,255,.3);pointer-events:none}
-.coin::after{content:'';position:absolute;inset:0;border-radius:50%;pointer-events:none;
-  background:conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,.5) 32deg, transparent 70deg,
-    transparent 180deg, rgba(255,255,255,.35) 212deg, transparent 250deg);
-  animation:shineSpin 5s linear infinite;mix-blend-mode:screen;opacity:.8}
-@keyframes shineSpin{to{transform:rotate(360deg)}}
-.symbol{position:relative;z-index:2;font-size:calc(var(--cs)*.42);font-weight:900;color:#9a5200;
-  text-shadow:0 2px 0 rgba(255,255,255,.55);filter:drop-shadow(0 0 14px rgba(255,255,255,.65));
-  pointer-events:none}
-.float{position:absolute;font-weight:900;font-size:22px;color:#fff;pointer-events:none;z-index:20;
-  white-space:nowrap;text-shadow:0 0 18px rgba(255,200,60,.95),0 3px 10px rgba(0,0,0,.7);
-  animation:floatUp .95s cubic-bezier(.2,.7,.3,1) forwards;transform:translate(-50%,-50%)}
-@keyframes floatUp{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
-  18%{opacity:1;transform:translate(-50%,-70%) scale(1.18)}
-  100%{opacity:0;transform:translate(-50%,-190%) scale(.9)}}
-.ripple{position:absolute;border-radius:50%;pointer-events:none;z-index:15;
-  border:2px solid rgba(255,215,90,.85);transform:translate(-50%,-50%);
-  animation:rippleOut .6s ease-out forwards}
-@keyframes rippleOut{0%{width:10px;height:10px;opacity:.9}100%{width:170px;height:170px;opacity:0}}
-.spark{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:16;
-  background:radial-gradient(circle,#fff,#ffc93c);box-shadow:0 0 10px #ffc93c;
-  transform:translate(-50%,-50%)}
-.energy-wrap{position:relative;z-index:3;padding:0 20px 10px}
-.energy-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;
-  font-weight:700;margin-bottom:6px}
-.energy-top .lbl{color:#ffd36b}.energy-top .val{color:#9fb0d0;font-variant-numeric:tabular-nums}
-.energy-bar{height:12px;border-radius:20px;overflow:hidden;position:relative;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
-.energy-fill{height:100%;width:100%;border-radius:20px;
-  background:linear-gradient(90deg,#39e6a4,#4ae3ff 55%,#8b7bff);
-  box-shadow:0 0 16px rgba(74,227,255,.7);transition:width .25s ease;position:relative}
-.energy-fill::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
-  animation:sweep 2s linear infinite}
-@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
-.energy-wrap.low .energy-fill{background:linear-gradient(90deg,#ff5a5a,#ff9f43);
-  box-shadow:0 0 16px rgba(255,90,90,.75)}
-.shake{animation:shakeIt .35s}
-@keyframes shakeIt{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
-.boosts{position:relative;z-index:3;display:flex;gap:10px;overflow-x:auto;
-  padding:2px 16px 12px;scrollbar-width:none}
-.boosts::-webkit-scrollbar{display:none}
-.boost{flex:0 0 auto;width:104px;padding:11px 9px 10px;border-radius:18px;cursor:pointer;
-  text-align:center;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.02));
-  border:1px solid var(--glass-brd);backdrop-filter:blur(16px);
-  box-shadow:0 8px 22px -10px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.1);
-  transition:transform .16s cubic-bezier(.34,1.6,.64,1),border-color .2s;
-  color:#fff;font-family:inherit}
-.boost:active{transform:scale(.94)}
-.boost.affordable{border-color:rgba(255,200,60,.45);
-  box-shadow:0 8px 26px -8px rgba(255,180,40,.45),inset 0 1px 0 rgba(255,255,255,.14)}
-.boost.affordable .b-cost{color:#ffd24a}
-.b-ico{font-size:22px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(255,200,60,.5))}
-.b-name{font-size:11px;font-weight:700;color:#dfe6fa;margin-bottom:2px;white-space:nowrap}
-.b-lv{font-size:9.5px;color:#7d8ab0;font-weight:600;margin-bottom:6px}
-.b-cost{font-size:11px;font-weight:800;color:#8fa0c4;display:flex;align-items:center;
-  justify-content:center;gap:3px;padding:3px 0;border-radius:9px;background:rgba(0,0,0,.28)}
-.b-cost .c{font-size:9px}
-.nav{position:relative;z-index:4;display:flex;justify-content:space-around;align-items:center;
-  padding:9px 10px calc(9px + env(safe-area-inset-bottom));
-  background:linear-gradient(180deg,rgba(10,14,28,.35),rgba(6,8,16,.95));
-  border-top:1px solid rgba(255,255,255,.07);backdrop-filter:blur(20px)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;
-  border:none;color:#5f6b8c;font-family:inherit;font-size:10px;font-weight:700;
-  cursor:pointer;padding:6px 0;transition:color .22s}
-.nav-item .ni{font-size:19px;line-height:1;transition:transform .25s,filter .25s}
-.nav-item.active{color:#ffd24a}
-.nav-item.active .ni{transform:translateY(-3px) scale(1.14);filter:drop-shadow(0 0 10px rgba(255,200,60,.85))}
-.nav-item:active{transform:scale(.93)}
-.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);
-  padding:11px 20px;border-radius:14px;font-size:13px;font-weight:700;
-  background:rgba(20,26,46,.95);border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 16px 40px rgba(0,0,0,.7);backdrop-filter:blur(16px);
-  opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.2,.9,.3,1);
-  z-index:100;white-space:nowrap;color:#fff}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.toast.ok{border-color:rgba(74,227,255,.5);color:#9ff0ff}
-.toast.err{border-color:rgba(255,90,90,.5);color:#ffb3b3}
+  text-shadow:0 0 30px rgba(0,255,163,.2);
+}
+.balance-usd{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+
+.stats-row{
+  position:relative;z-index:5;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  padding:6px 16px 4px;
+}
+.stat-pill{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 6px;border-radius:14px;
+  background:var(--card);border:1px solid var(--stroke);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.stat-label{font-size:9.5px;color:var(--muted);font-weight:700}
+.stat-value{font-size:14px;font-weight:800;color:#7fffd4;font-variant-numeric:tabular-nums}
+
+.arena{
+  position:relative;z-index:5;flex:1;min-height:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:4px 16px 8px;gap:clamp(10px,2.5vh,20px);
+}
+#fx{
+  position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;z-index:3;
+}
+
+.coin-stage{
+  position:relative;
+  width:min(70vw,270px);
+  aspect-ratio:1;
+  display:grid;place-items:center;
+  animation:floatIdle 5s ease-in-out infinite;
+}
+@keyframes floatIdle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+
+.ring-svg{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:1;pointer-events:none;
+  filter:drop-shadow(0 0 12px rgba(0,255,163,.25));
+}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:5}
+.ring-fill{
+  fill:none;
+  stroke:url(#ringGrad);
+  stroke-width:5;
+  stroke-linecap:round;
+  transform:rotate(-90deg);
+  transform-origin:100px 100px;
+  transition:stroke-dashoffset .18s linear, stroke .3s;
+  filter:drop-shadow(0 0 6px rgba(0,255,163,.7));
+}
+.ring-fill.low{stroke:#ff3d6e;filter:drop-shadow(0 0 8px rgba(255,61,110,.8))}
+
+.crystal-btn{
+  position:absolute;
+  width:74%;height:74%;
+  border:none;background:transparent;padding:0;
+  cursor:pointer;z-index:2;
+  display:grid;place-items:center;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .1s cubic-bezier(.3,1.6,.5,1);
+  will-change:transform;
+}
+.crystal-btn svg{
+  width:100%;height:100%;
+  overflow:visible;
+  filter:drop-shadow(0 0 22px rgba(0,255,163,.55));
+  transition:filter .25s;
+}
+.crystal-btn.press{transform:scale(.92) rotate(-3deg)}
+.crystal-btn.press svg{filter:drop-shadow(0 0 34px rgba(0,255,163,.95))}
+
+.shine-mask{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:50%}
+.shine-mask::after{
+  content:'';position:absolute;
+  top:-50%;left:-50%;width:200%;height:200%;
+  background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.5) 50%,transparent 58%);
+  background-size:250% 250%;
+  animation:sweep 4.5s linear infinite;
+  mix-blend-mode:overlay;
+}
+@keyframes sweep{0%{background-position:180% 0}100%{background-position:-80% 0}}
+
+.coin-stage.turbo .ring-fill{stroke:#ffd166;filter:drop-shadow(0 0 12px rgba(255,209,102,.9))}
+.coin-stage.turbo .crystal-btn svg{filter:drop-shadow(0 0 40px rgba(255,209,102,.9))}
+
+.combo-badge{
+  position:absolute;top:-6px;left:50%;
+  transform:translateX(-50%) scale(.6);
+  padding:4px 14px;border-radius:99px;
+  font-size:13px;font-weight:900;letter-spacing:.5px;
+  background:linear-gradient(135deg,#ff3d6e,#ff9d4d);
+  color:#fff;white-space:nowrap;
+  box-shadow:0 6px 22px rgba(255,61,110,.55),0 0 0 2px rgba(255,255,255,.1);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s cubic-bezier(.3,1.6,.5,1);
+  z-index:4;
+}
+.combo-badge.show{opacity:1;transform:translateX(-50%) scale(1)}
+
+.hint{
+  font-size:11px;color:var(--muted);font-weight:700;
+  text-align:center;letter-spacing:.3px;
+  animation:hintPulse 2.5s ease-in-out infinite;
+}
+@keyframes hintPulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+.energy-mini{width:min(72vw,290px);display:flex;flex-direction:column;gap:5px}
+.energy-mini-top{
+  display:flex;justify-content:space-between;
+  font-size:10.5px;color:var(--muted);font-weight:700;
+}
+.energy-mini-top b{color:#7fffd4}
+.energy-mini-track{
+  height:8px;border-radius:99px;overflow:hidden;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.05);
+}
+.energy-mini-fill{
+  height:100%;width:100%;border-radius:99px;
+  background:linear-gradient(90deg,#00ffa3,#22d3ee);
+  box-shadow:0 0 12px rgba(0,255,163,.6);
+  transition:width .16s linear;
+}
+.energy-mini.low .energy-mini-fill{background:linear-gradient(90deg,#ff3d6e,#ff7a5c);box-shadow:0 0 12px rgba(255,61,110,.7)}
+.energy-mini.shake{animation:eshake .35s}
+@keyframes eshake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+
+.dock{
+  position:relative;z-index:6;
+  display:flex;gap:2px;
+  margin:0 12px calc(10px + env(safe-area-inset-bottom));
+  padding:6px;border-radius:20px;
+  background:rgba(12,12,20,.85);
+  border:1px solid var(--stroke);
+  -webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  box-shadow:0 10px 34px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.dock-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 2px;border:none;background:transparent;
+  color:var(--muted);font-family:inherit;font-size:9px;font-weight:800;
+  cursor:pointer;border-radius:14px;transition:.2s;
+}
+.dock-btn .ic{font-size:18px;line-height:1;opacity:.6;transition:.2s}
+.dock-btn.active{color:#00ffa3;background:rgba(0,255,163,.09)}
+.dock-btn.active .ic{opacity:1;transform:translateY(-1px);filter:drop-shadow(0 0 8px rgba(0,255,163,.7))}
+.dock-btn:active{transform:scale(.9)}
+
+.sheet{
+  position:absolute;inset:0;z-index:20;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  pointer-events:none;
+}
+.sheet.open{pointer-events:auto}
+.scrim{
+  position:absolute;inset:0;background:rgba(0,0,0,.65);
+  opacity:0;transition:opacity .3s;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+.sheet.open .scrim{opacity:1}
+.panel{
+  position:relative;transform:translateY(102%);
+  transition:transform .42s cubic-bezier(.22,1,.36,1);
+  background:linear-gradient(180deg,#131320,#09090f);
+  border-radius:26px 26px 0 0;
+  border-top:1px solid rgba(255,255,255,.1);
+  padding:10px 18px calc(22px + env(safe-area-inset-bottom));
+  max-height:82%;overflow-y:auto;
+  box-shadow:0 -22px 64px rgba(0,0,0,.8);
+  scrollbar-width:none;
+}
+.panel::-webkit-scrollbar{display:none}
+.sheet.open .panel{transform:translateY(0)}
+.grabber{
+  width:40px;height:4px;border-radius:99px;
+  background:rgba(255,255,255,.16);margin:0 auto 16px;
+}
+.panel h2{
+  font-size:16px;font-weight:900;margin-bottom:13px;
+  display:flex;align-items:center;gap:8px;letter-spacing:.2px;
+}
+.panel h2 .em{font-size:18px}
+
+.card{
+  display:flex;align-items:center;gap:12px;
+  padding:12px;border-radius:16px;margin-bottom:9px;
+  background:var(--card);border:1px solid var(--stroke);
+  transition:transform .15s,background .2s;
+}
+.card:active{transform:scale(.985)}
+.ic-box{
+  width:44px;height:44px;flex:0 0 auto;border-radius:13px;
+  display:grid;place-items:center;font-size:20px;
+  background:linear-gradient(145deg,rgba(0,255,163,.16),rgba(34,211,238,.05));
+  border:1px solid rgba(0,255,163,.16);
+}
+.card .txt{flex:1;min-width:0}
+.card .t{font-size:13px;font-weight:800;margin-bottom:3px}
+.card .s{font-size:11px;color:var(--muted);line-height:1.35;font-weight:600}
+
+.buy{
+  flex:0 0 auto;border:none;font-family:inherit;
+  font-size:11.5px;font-weight:900;padding:9px 14px;border-radius:12px;
+  cursor:pointer;white-space:nowrap;
+  background:linear-gradient(145deg,#00ffa3,#22d3ee);
+  color:#042b1e;
+  box-shadow:0 4px 16px rgba(0,255,163,.3);
+  transition:transform .15s,opacity .2s,background .2s;
+  font-variant-numeric:tabular-nums;
+}
+.buy:active{transform:scale(.93)}
+.buy:disabled{background:rgba(255,255,255,.06);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.buy.wide{width:100%;padding:13px;font-size:13px;border-radius:14px;margin-top:4px}
+.task-done{opacity:.55}
+.task-done .buy{background:rgba(0,255,163,.14);color:#00ffa3;box-shadow:none}
+
+.invite{
+  border-radius:20px;padding:18px;text-align:center;
+  background:linear-gradient(150deg,rgba(168,85,247,.2),rgba(34,211,238,.1));
+  border:1px solid rgba(168,85,247,.22);
+}
+.invite-h{font-size:14px;font-weight:900;margin-bottom:14px}
+.invite-code{
+  font-size:19px;font-weight:900;letter-spacing:2.5px;
+  padding:12px;border-radius:13px;margin-bottom:12px;
+  background:rgba(0,0,0,.4);border:1px dashed rgba(255,255,255,.18);
+  color:#7fffd4;direction:ltr;font-family:"SF Mono","Consolas",monospace;
+}
+.friend{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 12px;border-radius:14px;margin-bottom:8px;
+  background:var(--card);border:1px solid var(--stroke);
+}
+.fav{
+  width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+  font-size:16px;background:rgba(255,255,255,.06);
+}
+.fname{flex:1;font-size:12.5px;font-weight:800}
+.famt{font-size:12px;font-weight:900;color:#7fffd4;font-variant-numeric:tabular-nums}
+
+.wallet-card{
+  border-radius:20px;padding:22px;text-align:center;margin-bottom:13px;
+  background:linear-gradient(150deg,rgba(0,255,163,.14),rgba(168,85,247,.1));
+  border:1px solid rgba(0,255,163,.2);
+}
+.wlabel{font-size:11.5px;color:var(--muted);font-weight:800;margin-bottom:8px}
+.wval{
+  font-size:30px;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(180deg,#fff,#7fffd4);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-variant-numeric:tabular-nums;
+}
+.wsub{font-size:12px;color:var(--muted);margin-top:6px;font-weight:700}
+.tx{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 12px;border-radius:13px;margin-bottom:8px;
+  background:var(--card);border:1px solid var(--stroke);
+  font-size:12px;font-weight:700;
+}
+.tx .tt{flex:1}
+.tx .ta{font-weight:900;color:#00ffa3;font-variant-numeric:tabular-nums}
+.tx .ta.out{color:#ff6b8a}
+
+.toast{
+  position:absolute;left:50%;top:14%;z-index:80;
+  transform:translate(-50%,0);
+  background:rgba(18,18,28,.97);
+  border:1px solid rgba(0,255,163,.25);
+  color:#fff;padding:11px 20px;border-radius:14px;
+  font-size:13px;font-weight:800;white-space:nowrap;
+  box-shadow:0 12px 34px rgba(0,0,0,.7),0 0 24px rgba(0,255,163,.15);
+  animation:toastIn .3s ease,toastOut .35s ease 1.6s forwards;
+  pointer-events:none;
+}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-12px)}}
+@keyframes toastOut{to{opacity:0;transform:translate(-50%,-18px)}}
+
+.levelup{
+  position:absolute;inset:0;z-index:90;pointer-events:none;
+  display:grid;place-items:center;
+  animation:lvlFade 2.2s ease forwards;
+}
+.levelup-inner{
+  padding:18px 32px;border-radius:20px;text-align:center;
+  background:linear-gradient(135deg,rgba(0,255,163,.95),rgba(34,211,238,.95));
+  color:#042b1e;font-weight:900;font-size:20px;
+  box-shadow:0 20px 60px rgba(0,255,163,.6),0 0 0 2px rgba(255,255,255,.3);
+  animation:lvlPop .6s cubic-bezier(.3,1.6,.5,1);
+}
+.levelup-inner small{display:block;font-size:12px;font-weight:800;margin-top:4px;opacity:.8}
+@keyframes lvlPop{from{transform:scale(.5) rotate(-8deg);opacity:0}}
+@keyframes lvlFade{0%,70%{opacity:1}100%{opacity:0}}
+
+.float{
+  position:absolute;z-index:9;pointer-events:none;white-space:nowrap;
+  font-size:22px;font-weight:900;color:#fff;
+  text-shadow:0 0 20px rgba(0,255,163,.9),0 2px 8px rgba(0,0,0,.7);
+  animation:floatUp .9s cubic-bezier(.2,.8,.3,1) forwards;
+  will-change:transform,opacity;
+}
+@keyframes floatUp{
+  0%{opacity:0;transform:translate(-50%,0) scale(.55)}
+  16%{opacity:1;transform:translate(-50%,-12px) scale(1.18)}
+  100%{opacity:0;transform:translate(-50%,-110px) scale(.9)}
+}
+
+.ripple{
+  position:absolute;border-radius:50%;
+  border:2px solid rgba(0,255,163,.6);
+  pointer-events:none;z-index:3;
+  animation:rip .7s ease-out forwards;
+  will-change:transform,opacity;
+}
+@keyframes rip{0%{opacity:.9;transform:scale(.85)}100%{opacity:0;transform:scale(1.6)}}
+
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 4px;border-bottom:1px solid rgba(255,255,255,.06);
+}
+.setting-row:last-child{border-bottom:none}
+.setting-row .lbl{font-size:13px;font-weight:800}
+.setting-row .sub{font-size:10.5px;color:var(--muted);margin-top:2px;font-weight:600}
+.toggle{
+  width:46px;height:26px;border-radius:99px;border:none;
+  background:rgba(255,255,255,.12);position:relative;cursor:pointer;
+  transition:background .25s;
+}
+.toggle::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:transform .25s cubic-bezier(.3,1.6,.5,1);
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+.toggle.on{background:linear-gradient(90deg,#00ffa3,#22d3ee)}
+.toggle.on::after{transform:translateX(20px)}
 </style>
 </head>
 <body>
 
-<div class="app">
-  <header class="topbar">
-    <div class="user">
-      <div class="avatar" id="avatarEl">👤</div>
-      <div>
-        <div class="uname" id="unameEl">لاعب مجهول</div>
-        <div class="urank">🥉 برونزي</div>
+<div class="app" id="app">
+
+  <div class="bg">
+    <div class="aurora a1"></div>
+    <div class="aurora a2"></div>
+    <div class="aurora a3"></div>
+  </div>
+
+  <header class="header">
+    <div class="profile">
+      <div class="avatar">⚡</div>
+      <div class="pinfo">
+        <div class="pname">CyberNexus <span class="badge-pro">PRO</span></div>
+        <div class="plevel">
+          <span id="lvlTxt">Lv.1</span>
+          <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+        </div>
       </div>
     </div>
-    <button class="icon-btn" id="soundBtn" title="الصوت">🔊</button>
+    <button class="icon-btn" id="settingsBtn" aria-label="الإعدادات">⚙️</button>
   </header>
 
-  <div class="hud">
-    <div class="balance-row">
-      <div class="coin-mini">◈</div>
-      <div class="balance" id="balanceEl">0</div>
+  <div class="balance-block">
+    <div class="balance-main">
+      <div class="balance-icon">◈</div>
+      <div class="balance-num" id="balance">0</div>
     </div>
-    <div class="profit"><span class="dot"></span> +<span id="profitEl">0</span> / ساعة</div>
+    <div class="balance-usd">≈ <span id="usdVal">$0.00</span> USDT</div>
   </div>
 
-  <div class="tap-area" id="tapArea">
-    <div class="coin-wrap">
-      <div class="ring"></div>
-      <div class="ring r2"></div>
-      <div class="coin" id="coin"><span class="symbol">◈</span></div>
+  <div class="stats-row">
+    <div class="stat-pill">
+      <span class="stat-label">لكل نقرة</span>
+      <span class="stat-value" id="perTap">+1</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-label">في الساعة</span>
+      <span class="stat-value" id="perHour">0</span>
     </div>
   </div>
 
-  <div class="energy-wrap" id="energyWrap">
-    <div class="energy-top">
-      <span class="lbl">⚡ الطاقة</span>
-      <span class="val" id="energyText">1000 / 1000</span>
+  <main class="arena" id="arena">
+    <canvas id="fx"></canvas>
+
+    <div class="coin-stage" id="coinStage">
+      <svg class="ring-svg" viewBox="0 0 200 200">
+        <defs>
+          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#00ffa3"/>
+            <stop offset="100%" stop-color="#22d3ee"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="100" cy="100" r="92"/>
+        <circle class="ring-fill" id="energyRing" cx="100" cy="100" r="92"
+                stroke-dasharray="578" stroke-dashoffset="0"/>
+      </svg>
+
+      <div class="combo-badge" id="comboBadge">x2</div>
+
+      <button class="crystal-btn" id="crystal" aria-label="اضغط لجمع الطاقة">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <linearGradient id="crystalGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#00ffa3"/>
+              <stop offset="48%" stop-color="#22d3ee"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+            <linearGradient id="facetGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,.85)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </linearGradient>
+          </defs>
+          <polygon points="50,6 88,28 88,72 50,94 12,72 12,28"
+                   fill="url(#crystalGrad)"/>
+          <polygon points="50,18 76,33 76,67 50,82 24,67 24,33"
+                   fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2"/>
+          <polygon points="50,6 88,28 50,50"
+                   fill="url(#facetGrad)" opacity=".45"/>
+          <polygon points="50,6 12,28 50,50"
+                   fill="url(#facetGrad)" opacity=".2"/>
+          <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+          <line x1="12" y1="28" x2="88" y2="72" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <line x1="88" y1="28" x2="12" y2="72" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        </svg>
+      </button>
     </div>
-    <div class="energy-bar"><div class="energy-fill" id="energyFill"></div></div>
-  </div>
 
-  <div class="boosts" id="boosts">
-    <button class="boost" data-key="multi">
-      <div class="b-ico">👆</div><div class="b-name">نقرة قوية</div>
-      <div class="b-lv">مستوى <span data-lv>1</span></div>
-      <div class="b-cost"><span class="c">◈</span><span data-cost>150</span></div>
-    </button>
-    <button class="boost" data-key="energy">
-      <div class="b-ico">🔋</div><div class="b-name">طاقة قصوى</div>
-      <div class="b-lv">مستوى <span data-lv>1</span></div>
-      <div class="b-cost"><span class="c">◈</span><span data-cost>250</span></div>
-    </button>
-    <button class="boost" data-key="regen">
-      <div class="b-ico">⚡</div><div class="b-name">شحن سريع</div>
-      <div class="b-lv">مستوى <span data-lv>1</span></div>
-      <div class="b-cost"><span class="c">◈</span><span data-cost>400</span></div>
-    </button>
-    <button class="boost" data-key="auto">
-      <div class="b-ico">🤖</div><div class="b-name">روبوت تعدين</div>
-      <div class="b-lv">مستوى <span data-lv>1</span></div>
-      <div class="b-cost"><span class="c">◈</span><span data-cost>600</span></div>
-    </button>
-  </div>
+    <div class="hint">اضغط البلورة لجمع الطاقة ⚡</div>
 
-  <nav class="nav">
-    <button class="nav-item active" data-nav="home"><span class="ni">🪙</span>الرئيسية</button>
-    <button class="nav-item" data-nav="tasks"><span class="ni">🎯</span>المهام</button>
-    <button class="nav-item" data-nav="friends"><span class="ni">👥</span>الأصدقاء</button>
-    <button class="nav-item" data-nav="wallet"><span class="ni">💳</span>المحفظة</button>
+    <div class="energy-mini" id="energyMini">
+      <div class="energy-mini-top">
+        <span>⚡ الطاقة</span>
+        <span><b id="enTxt">1000</b> / <span id="enMax">1000</span></span>
+      </div>
+      <div class="energy-mini-track"><div class="energy-mini-fill" id="enFill"></div></div>
+    </div>
+  </main>
+
+  <nav class="dock">
+    <button class="dock-btn active" data-tab="home"><span class="ic">◈</span>الرئيسية</button>
+    <button class="dock-btn" data-tab="boost"><span class="ic">⚡</span>بوست</button>
+    <button class="dock-btn" data-tab="tasks"><span class="ic">🎯</span>مهام</button>
+    <button class="dock-btn" data-tab="friends"><span class="ic">👥</span>أصدقاء</button>
+    <button class="dock-btn" data-tab="wallet"><span class="ic">💎</span>محفظة</button>
   </nav>
+
+  <div class="sheet" id="sheet-boost">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2><span class="em">⚡</span> البوستات</h2>
+
+      <div class="card">
+        <div class="ic-box">🚀</div>
+        <div class="txt">
+          <div class="t">تيربو ×5</div>
+          <div class="s">ضاعف أرباحك لمدة 20 ثانية</div>
+        </div>
+        <button class="buy" data-buy="turbo" id="turboBtn">400</button>
+      </div>
+
+      <div class="card">
+        <div class="ic-box">🔋</div>
+        <div class="txt">
+          <div class="t">تعبئة الطاقة</div>
+          <div class="s">املأ الطاقة بالكامل فوراً</div>
+        </div>
+        <button class="buy" data-buy="refill" id="refillBtn">250</button>
+      </div>
+
+      <h2 style="margin-top:20px"><span class="em">🛠️</span> الترقيات</h2>
+
+      <div class="card">
+        <div class="ic-box">👆</div>
+        <div class="txt">
+          <div class="t">قوة النقر</div>
+          <div class="s" id="tapDesc">+1 عملة لكل نقرة</div>
+        </div>
+        <button class="buy" data-buy="tapPower" id="tapBtn">500</button>
+      </div>
+
+      <div class="card">
+        <div class="ic-box">🤖</div>
+        <div class="txt">
+          <div class="t">الروبوت التلقائي</div>
+          <div class="s" id="autoDesc">لا يوجد دخل تلقائي</div>
+        </div>
+        <button class="buy" data-buy="auto" id="autoBtn">1200</button>
+      </div>
+
+      <div class="card">
+        <div class="ic-box">🔋</div>
+        <div class="txt">
+          <div class="t">تجديد الطاقة</div>
+          <div class="s" id="regenDesc">+2 طاقة/ثانية</div>
+        </div>
+        <button class="buy" data-buy="regen" id="regenBtn">800</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-tasks">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2><span class="em">🎯</span> المهام</h2>
+      <div id="taskList"></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-friends">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2><span class="em">👥</span> الأصدقاء</h2>
+
+      <div class="invite">
+        <div class="invite-h">🎁 ادعُ صديقاً واربح 10,000</div>
+        <div class="invite-code" id="refCode">NEX-7X9K2</div>
+        <button class="buy wide" id="copyRef">📋 نسخ رابط الدعوة</button>
+      </div>
+
+      <h2 style="margin-top:20px"><span class="em">🏆</span> أفضل الأصدقاء</h2>
+      <div class="friend"><div class="fav">🦊</div><div class="fname">أحمد م.</div><div class="famt">+24,500</div></div>
+      <div class="friend"><div class="fav">🐼</div><div class="fname">سارة ل.</div><div class="famt">+18,200</div></div>
+      <div class="friend"><div class="fav">🦁</div><div class="fname">ياسين ب.</div><div class="famt">+11,900</div></div>
+      <div class="friend"><div class="fav">🐨</div><div class="fname">نور هـ.</div><div class="famt">+7,350</div></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-wallet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2><span class="em">💎</span> المحفظة</h2>
+
+      <div class="wallet-card">
+        <div class="wlabel">الرصيد القابل للسحب</div>
+        <div class="wval" id="walletBal">0</div>
+        <div class="wsub">≈ <span id="walletUsd">$0.00</span> USDT</div>
+      </div>
+
+      <button class="buy wide" id="connectBtn">🔗 ربط المحفظة</button>
+
+      <h2 style="margin-top:20px"><span class="em">📜</span> آخر العمليات</h2>
+      <div class="tx"><span>◈</span><span class="tt">مكافأة المهام</span><span class="ta">+5,000</span></div>
+      <div class="tx"><span>👥</span><span class="tt">دعوة صديق</span><span class="ta">+10,000</span></div>
+      <div class="tx"><span>🚀</span><span class="tt">شراء تيربو</span><span class="ta out">-400</span></div>
+      <div class="tx"><span>🤖</span><span class="tt">أرباح الروبوت</span><span class="ta">+1,240</span></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="sheet-settings">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <div class="grabber"></div>
+      <h2><span class="em">⚙️</span> الإعدادات</h2>
+
+      <div class="setting-row">
+        <div>
+          <div class="lbl">🔊 الأصوات</div>
+          <div class="sub">تشغيل/إيقاف مؤثرات الصوت</div>
+        </div>
+        <button class="toggle on" id="soundToggle"></button>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="lbl">📳 الاهتزاز</div>
+          <div class="sub">اهتزاز عند النقر (إن كان مدعوماً)</div>
+        </div>
+        <button class="toggle on" id="hapticToggle"></button>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="lbl">🗑️ إعادة التعيين</div>
+          <div class="sub">مسح جميع البيانات والبدء من جديد</div>
+        </div>
+        <button class="buy" id="resetBtn" style="background:linear-gradient(145deg,#ff3d6e,#ff7a5c);color:#fff">إعادة</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
-/* ==========================================================
-   CoinTap — CloudStorage Edition
-   البيانات تُحفظ في سحابة تلغرام (أو localStorage كبديل)
-   ========================================================== */
+(function(){
+'use strict';
 
-const $  = s => document.querySelector(s);
-const $$ = s => [...document.querySelectorAll(s)];
+/* ================= HELPERS ================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-/* ---------- Telegram WebApp ---------- */
-const tg = window.Telegram?.WebApp;
-const hasCloud = !!tg?.CloudStorage;
+const APP       = $('#app');
+const arena     = $('#arena');
+const crystal   = $('#crystal');
+const coinStage = $('#coinStage');
+const canvas    = $('#fx');
+const ctx       = canvas.getContext('2d');
+const balEl     = $('#balance');
+const usdEl     = $('#usdVal');
+const enFill    = $('#enFill');
+const enTxt     = $('#enTxt');
+const enMaxEl   = $('#enMax');
+const energyMini= $('#energyMini');
+const energyRing= $('#energyRing');
+const lvlTxt    = $('#lvlTxt');
+const xpFill    = $('#xpFill');
+const perTapEl  = $('#perTap');
+const perHourEl = $('#perHour');
+const comboBadge= $('#comboBadge');
+const walletBalEl = $('#walletBal');
+const walletUsdEl = $('#walletUsd');
 
-if(tg){
-  tg.ready();
-  tg.expand();
-  tg.setHeaderColor('#0b0f22');
-  tg.setBackgroundColor('#05060d');
-  // عرض اسم المستخدم الحقيقي
-  const u = tg.initDataUnsafe?.user;
-  if(u){
-    $('#unameEl').textContent = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'لاعب';
-    if(u.photo_url){
-      $('#avatarEl').innerHTML = `<img src="${u.photo_url}" style="width:100%;height:100%;border-radius:14px;object-fit:cover">`;
-    } else {
-      $('#avatarEl').textContent = (u.first_name || '👤').charAt(0).toUpperCase();
-    }
-  }
-}
+const RING_CIRC = 578;
+const SAVE_KEY = 'nexus_tap_v1';
 
-/* ---------- State ---------- */
-const DEFAULT = {
-  balance: 0, energy: 1000, maxEnergy: 1000,
-  multiTap: 1, regen: 3, passive: 0,
-  lv: { multi: 1, energy: 1, regen: 1, auto: 1 }
+const DEFAULTS = {
+  coins: 0,
+  level: 1,
+  xp: 0,
+  energy: 1000,
+  maxEnergy: 1000,
+  upgrades: { tapPower: 1, autoMiner: 0, energyRegen: 1 },
+  turboUntil: 0,
+  tasks: {},
+  wallet: false,
+  sound: true,
+  haptic: true,
+  totalTaps: 0
 };
 
-const KEY = 'cointap_v1';
-let S = structuredClone(DEFAULT);
-
-/* ---------- CloudStorage helpers (Promise wrappers) ---------- */
-function tgGet(key){
-  return new Promise((res, rej) => {
-    tg.CloudStorage.getItem(key, (err, val) => err ? rej(err) : res(val));
-  });
-}
-function tgSet(key, val){
-  return new Promise((res, rej) => {
-    tg.CloudStorage.setItem(key, val, (err) => err ? rej(err) : res());
-  });
-}
-
-/* ---------- Load ---------- */
-async function loadState(){
-  // 1) CloudStorage
-  if(hasCloud){
-    try{
-      const raw = await tgGet(KEY);
-      if(raw){
-        const d = JSON.parse(raw);
-        return { ...structuredClone(DEFAULT), ...d, lv: { ...DEFAULT.lv, ...(d.lv||{}) } };
-      }
-    }catch(e){ console.warn('CloudStorage load failed:', e); }
-  }
-  // 2) Fallback localStorage
+/* ================= STATE ================= */
+function load(){
   try{
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(SAVE_KEY);
     if(raw){
-      const d = JSON.parse(raw);
-      return { ...structuredClone(DEFAULT), ...d, lv: { ...DEFAULT.lv, ...(d.lv||{}) } };
+      const p = JSON.parse(raw);
+      return Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), p, {
+        upgrades: Object.assign({ tapPower:1, autoMiner:0, energyRegen:1 }, p.upgrades || {}),
+        tasks: p.tasks || {}
+      });
     }
   }catch(e){}
-  return structuredClone(DEFAULT);
+  return JSON.parse(JSON.stringify(DEFAULTS));
 }
 
-/* ---------- Save (debounced + coalesced) ---------- */
-let saving = false, needsSave = false, saveTimer = null;
+let S = load();
+let shown = S.coins;
+let soundOn  = S.sound !== false;
+let hapticOn = S.haptic !== false;
 
-async function doSave(){
-  if(saving){ needsSave = true; return; }
-  saving = true;
-  const raw = JSON.stringify(S);
-  try{
-    if(hasCloud) await tgSet(KEY, raw);
-    try{ localStorage.setItem(KEY, raw); }catch(e){}
-  }catch(e){
-    console.warn('CloudStorage save failed:', e);
-    try{ localStorage.setItem(KEY, raw); }catch(e){}
-  }finally{
-    saving = false;
-    if(needsSave){ needsSave = false; setTimeout(doSave, 250); }
-  }
-}
-
-function save(immediate = false){
-  if(immediate){ clearTimeout(saveTimer); doSave(); return; }
+let saveTimer;
+function save(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(doSave, 800);
+  saveTimer = setTimeout(() => {
+    try{
+      S.sound = soundOn;
+      S.haptic = hapticOn;
+      localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+    }catch(e){}
+  }, 700);
 }
 
-/* ---------- Costs ---------- */
-const COST = {
-  multi:  lv => Math.floor(150 * Math.pow(1.75, lv - 1)),
-  energy: lv => Math.floor(250 * Math.pow(1.6,  lv - 1)),
-  regen:  lv => Math.floor(400 * Math.pow(1.65, lv - 1)),
-  auto:   lv => Math.floor(600 * Math.pow(1.7,  lv - 1))
-};
-
-/* ---------- Formatting ---------- */
+/* ================= FORMAT ================= */
 function fmt(n){
   n = Math.floor(n);
-  if(n < 1000) return n.toLocaleString('en-US');
-  if(n < 1e6)  return (n/1e3).toFixed(2).replace(/\.?0+$/,'') + 'K';
+  if(n < 1000) return String(n);
+  if(n < 1e6)  return (n/1e3).toFixed(n < 1e4 ? 1 : 0).replace(/\.0$/,'') + 'K';
   if(n < 1e9)  return (n/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
-  if(n < 1e12) return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + 'B';
-  return (n/1e12).toFixed(2).replace(/\.?0+$/,'') + 'T';
+  return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + 'B';
 }
 
-/* ---------- Elements ---------- */
-const balanceEl  = $('#balanceEl');
-const profitEl   = $('#profitEl');
-const energyText = $('#energyText');
-const energyFill = $('#energyFill');
-const energyWrap = $('#energyWrap');
-const coinEl     = $('#coin');
-const tapArea    = $('#tapArea');
-const toastEl    = $('#toast');
+/* ================= AUDIO (THROTTLED) ================= */
+let actx = null;
+let lastSoundT = 0;
 
-/* ---------- Render ---------- */
-function render(){
-  balanceEl.textContent = fmt(S.balance);
-  profitEl.textContent  = fmt(S.passive * 3600);
-  const pct = Math.max(0, Math.min(1, S.energy / S.maxEnergy));
-  energyFill.style.width = (pct * 100) + '%';
-  energyText.textContent = `${Math.floor(S.energy)} / ${fmt(S.maxEnergy)}`;
-  energyWrap.classList.toggle('low', pct < 0.2);
-  $$('.boost').forEach(btn => {
-    const key = btn.dataset.key;
-    const lv  = S.lv[key];
-    btn.querySelector('[data-lv]').textContent   = lv;
-    btn.querySelector('[data-cost]').textContent = fmt(COST[key](lv));
-    btn.classList.toggle('affordable', S.balance >= COST[key](lv));
-  });
-}
-
-/* ---------- Toast ---------- */
-let toastTimer;
-function toast(msg, type = ''){
-  toastEl.textContent = msg;
-  toastEl.className = 'toast show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.className = 'toast ' + type, 1700);
-}
-
-/* ---------- Haptics ---------- */
-function haptic(ms = 8){
-  if(tg?.HapticFeedback){
-    try{ tg.HapticFeedback.impactOccurred('light'); return; }catch(e){}
-  }
-  if(navigator.vibrate) navigator.vibrate(ms);
-}
-
-/* ---------- Sound ---------- */
-let audioCtx = null, soundOn = true;
-function blip(freq = 620, dur = 0.07, type = 'sine', vol = 0.06){
+function playTone(freq, dur, type){
   if(!soundOn) return;
+  // throttle: max one sound every 55ms
+  const now = performance.now();
+  if(now - lastSoundT < 55) return;
+  lastSoundT = now;
+
   try{
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(freq * 0.65, audioCtx.currentTime + dur);
-    g.gain.setValueAtTime(vol, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
-    o.connect(g).connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + dur);
+    if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+    const t = actx.currentTime;
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * 1.5, t + dur * 0.6);
+    g.gain.setValueAtTime(0.05, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(actx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
   }catch(e){}
 }
 
-/* ---------- Tap effects ---------- */
-function spawnFloat(x, y, amount){
+let lastHapticT = 0;
+function haptic(ms){
+  if(!hapticOn || !navigator.vibrate) return;
+  const now = performance.now();
+  if(now - lastHapticT < 35) return;
+  lastHapticT = now;
+  navigator.vibrate(ms);
+}
+
+/* ================= TOAST ================= */
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  APP.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+/* ================= CANVAS (SPRITE-BASED, NO shadowBlur) ================= */
+let W = 0, H = 0, DPR = 1;
+
+/* Pre-render glow sprites once per hue — drawImage is GPU-accelerated */
+const SPRITES = {};
+function buildSprites(){
+  const hues = [40, 45, 55, 155, 160, 165, 175, 185, 275];
+  for(const hue of hues){
+    const c = document.createElement('canvas');
+    c.width = c.height = 32;
+    const cx = c.getContext('2d');
+    const g = cx.createRadialGradient(16,16,0,16,16,16);
+    g.addColorStop(0,    'hsla(' + hue + ',100%,78%,1)');
+    g.addColorStop(0.35, 'hsla(' + hue + ',100%,62%,0.85)');
+    g.addColorStop(1,    'hsla(' + hue + ',100%,52%,0)');
+    cx.fillStyle = g;
+    cx.fillRect(0, 0, 32, 32);
+    SPRITES[hue] = c;
+  }
+}
+buildSprites();
+
+/* Cached arena rect (invalidated on resize) */
+let rectCache = null;
+
+function sizeCanvas(){
+  const r = arena.getBoundingClientRect();
+  rectCache = r;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = r.width; H = r.height;
+  canvas.width  = Math.max(1, Math.floor(W * DPR));
+  canvas.height = Math.max(1, Math.floor(H * DPR));
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+const parts = [];
+const MAX_PARTS = 60; // was 180
+
+function burst(x, y, n, turbo){
+  const palette = turbo
+    ? [40, 45, 55, 160]
+    : [155, 165, 175, 185, 275];
+
+  for(let i = 0; i < n; i++){
+    if(parts.length >= MAX_PARTS) break;
+    const a  = Math.random() * Math.PI * 2;
+    const sp = 80 + Math.random() * 300;
+    parts.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 90,
+      life: 1,
+      decay: 1.2 + Math.random() * 1.4,
+      size: 2 + Math.random() * 5,
+      hue: palette[(Math.random() * palette.length) | 0]
+    });
+  }
+}
+
+function updateParticles(dt){
+  ctx.clearRect(0, 0, W, H);
+  if(!parts.length) return;
+
+  ctx.globalCompositeOperation = 'lighter';
+
+  for(let i = parts.length - 1; i >= 0; i--){
+    const p = parts[i];
+    p.life -= p.decay * dt;
+    if(p.life <= 0){ parts.splice(i, 1); continue; }
+
+    p.vy += 680 * dt;
+    p.vx *= 0.98;
+    p.x  += p.vx * dt;
+    p.y  += p.vy * dt;
+
+    const a = p.life;
+    const s = p.size * a * 5; // sprite draw size
+
+    ctx.globalAlpha = a;
+    const sprite = SPRITES[p.hue] || SPRITES[155];
+    ctx.drawImage(sprite, p.x - s/2, p.y - s/2, s, s);
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/* ================= DOM FX (CAPPED) ================= */
+let activeFloats = 0;
+let activeRipples = 0;
+const MAX_FLOATS = 8;
+const MAX_RIPPLES = 5;
+
+function spawnFloat(val, x, y, turbo){
+  if(activeFloats >= MAX_FLOATS) return;
+  activeFloats++;
+
   const el = document.createElement('div');
   el.className = 'float';
-  el.textContent = '+' + amount;
+  el.textContent = '+' + fmt(val);
   el.style.left = x + 'px';
-  el.style.top  = y + 'px';
-  el.style.fontSize = (20 + Math.min(10, S.multiTap)) + 'px';
-  tapArea.appendChild(el);
-  setTimeout(() => el.remove(), 950);
+  el.style.top  = (y - 26) + 'px';
+  if(turbo) el.style.color = '#ffd166';
+  arena.appendChild(el);
+  setTimeout(() => { el.remove(); activeFloats--; }, 950);
 }
-function spawnRipple(x, y){
-  const el = document.createElement('div');
-  el.className = 'ripple';
-  el.style.left = x + 'px';
-  el.style.top  = y + 'px';
-  tapArea.appendChild(el);
-  setTimeout(() => el.remove(), 620);
+
+function spawnRipple(x, y, size){
+  if(activeRipples >= MAX_RIPPLES) return;
+  activeRipples++;
+
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  const s = size || 90;
+  r.style.width = s + 'px';
+  r.style.height = s + 'px';
+  r.style.left = (x - s/2) + 'px';
+  r.style.top  = (y - s/2) + 'px';
+  arena.appendChild(r);
+  setTimeout(() => { r.remove(); activeRipples--; }, 720);
 }
-function spawnSparks(x, y){
-  for(let i = 0; i < 5; i++){
-    const el = document.createElement('div');
-    el.className = 'spark';
-    el.style.left = x + 'px';
-    el.style.top  = y + 'px';
-    tapArea.appendChild(el);
-    const angle = Math.random() * Math.PI * 2;
-    const dist  = 34 + Math.random() * 46;
-    const dx = Math.cos(angle) * dist;
-    const dy = Math.sin(angle) * dist;
-    el.animate([
-      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
-      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }
-    ], { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.4,1)' });
-    setTimeout(() => el.remove(), 760);
+
+let pressTimer;
+function pressAnim(){
+  crystal.classList.add('press');
+  clearTimeout(pressTimer);
+  pressTimer = setTimeout(() => crystal.classList.remove('press'), 100);
+}
+
+/* ================= COMBO ================= */
+let comboCount = 0;
+let comboTimer = null;
+let comboMult = 1;
+
+function bumpCombo(){
+  comboCount++;
+  clearTimeout(comboTimer);
+  comboTimer = setTimeout(() => {
+    comboCount = 0;
+    comboMult = 1;
+    comboBadge.classList.remove('show');
+  }, 1300);
+
+  const newMult = Math.min(5, 1 + Math.floor(comboCount / 5));
+  if(newMult !== comboMult){
+    comboMult = newMult;
+    if(comboMult >= 2){
+      comboBadge.textContent = 'x' + comboMult;
+      comboBadge.classList.add('show');
+      playTone(880, 0.08, 'triangle');
+    } else {
+      comboBadge.classList.remove('show');
+    }
   }
 }
 
-/* ---------- Core tap ---------- */
-let lastTap = 0;
+/* ================= GAME LOGIC ================= */
+function tapGain(){
+  let g = S.upgrades.tapPower * comboMult;
+  if(Date.now() < S.turboUntil) g *= 5;
+  return g;
+}
+function autoRate(){ return S.upgrades.autoMiner * 3; }
+function regenRate(){ return 2 + (S.upgrades.energyRegen - 1); }
+
+/* addXp NO LONGER calls refreshHeader (that was the biggest tap-path cost) */
+function addXp(n){
+  S.xp += n;
+  let need = S.level * 150;
+  let leveled = false;
+
+  while(S.xp >= need){
+    S.xp -= need;
+    S.level++;
+    S.maxEnergy += 100;
+    S.energy = S.maxEnergy;
+    S.coins += S.level * 300;
+    leveled = true;
+    need = S.level * 150;
+  }
+
+  if(leveled){
+    showLevelUp(S.level);
+    playTone(660, 0.25, 'sine');
+    setTimeout(() => playTone(990, 0.3, 'sine'), 120);
+    headerDirty = true;
+  }
+}
+
+function showLevelUp(level){
+  const el = document.createElement('div');
+  el.className = 'levelup';
+  el.innerHTML = '<div class="levelup-inner">⬆️ المستوى ' + level +
+    '<small>طاقة قصوى +100 · مكافأة +' + (level*300) + '</small></div>';
+  APP.appendChild(el);
+  setTimeout(() => el.remove(), 2300);
+}
+
+/* Cached header updates — only writes DOM when value actually changes */
+const _hdr = {};
+function refreshHeader(){
+  const lvlStr = 'Lv.' + S.level;
+  if(_hdr.lvl !== lvlStr){ lvlTxt.textContent = lvlStr; _hdr.lvl = lvlStr; }
+
+  const xpW = Math.min(100, (S.xp / (S.level * 150)) * 100) + '%';
+  if(_hdr.xp !== xpW){ xpFill.style.width = xpW; _hdr.xp = xpW; }
+
+  const enMaxStr = String(S.maxEnergy);
+  if(_hdr.enMax !== enMaxStr){ enMaxEl.textContent = enMaxStr; _hdr.enMax = enMaxStr; }
+
+  const ptStr = '+' + tapGain();
+  if(_hdr.pt !== ptStr){ perTapEl.textContent = ptStr; _hdr.pt = ptStr; }
+
+  const phStr = fmt(autoRate() * 3600);
+  if(_hdr.ph !== phStr){ perHourEl.textContent = phStr; _hdr.ph = phStr; }
+
+  const usdStr = '$' + (S.coins / 100000).toFixed(2);
+  if(_hdr.usd !== usdStr){
+    usdEl.textContent = usdStr;
+    walletUsdEl.textContent = usdStr;
+    _hdr.usd = usdStr;
+  }
+
+  const wbStr = fmt(S.coins);
+  if(_hdr.wb !== wbStr){ walletBalEl.textContent = wbStr; _hdr.wb = wbStr; }
+}
+
+/* ================= THE FAST TAP PATH ================= */
 function doTap(clientX, clientY){
-  const rect = tapArea.getBoundingClientRect();
+  /* 1. Energy check — cheap */
   if(S.energy < 1){
-    energyWrap.classList.add('shake');
-    setTimeout(() => energyWrap.classList.remove('shake'), 380);
-    haptic([18, 40, 18]);
-    toast('⚡ الطاقة نفدت، انتظر قليلاً', 'err');
+    energyMini.classList.add('shake');
+    setTimeout(() => energyMini.classList.remove('shake'), 380);
+    playTone(160, 0.12, 'square');
     return;
   }
+
+  /* 2. Read rect BEFORE any DOM mutation (avoids forced reflow) */
+  const r = rectCache || arena.getBoundingClientRect();
+  const x = clientX - r.left;
+  const y = clientY - r.top;
+
+  /* 3. State updates — no DOM, no layout */
   S.energy -= 1;
-  const gain = S.multiTap;
-  S.balance += gain;
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
-  spawnFloat(x, y, gain);
-  spawnRipple(x, y);
-  spawnSparks(x, y);
-  coinEl.classList.add('pressed');
-  setTimeout(() => coinEl.classList.remove('pressed'), 90);
-  haptic(8);
-  const now = performance.now();
-  if(now - lastTap > 55) blip(560 + Math.random() * 140, 0.06, 'sine', 0.045);
-  lastTap = now;
-  render();
+  S.totalTaps++;
+
+  const turbo = Date.now() < S.turboUntil;
+  bumpCombo();
+
+  const gain = tapGain();
+  S.coins += gain;
+  addXp(1); // now header-free
+
+  /* 4. Visual feedback (capped & throttled internally) */
+  spawnFloat(gain, x, y, turbo);
+  burst(x, y, turbo ? 10 : 6, turbo);
+  spawnRipple(x, y, 80 + Math.random() * 40);
+  pressAnim();
+
+  /* 5. Audio + haptic (throttled) */
+  playTone(turbo ? 680 : 520 + Math.random() * 100, 0.07, 'sine');
+  haptic(turbo ? 16 : 8);
+
+  /* 6. Persist (debounced) */
+  save();
 }
 
-tapArea.addEventListener('pointerdown', e => {
-  if(e.button !== undefined && e.button !== 0) return;
+/* ================= MAIN LOOP ================= */
+let lastT = performance.now();
+let headerDirty = true;
+let hdrAccum = 0;
+
+function loop(now){
+  const dt = Math.min((now - lastT) / 1000, 0.1);
+  lastT = now;
+
+  /* energy regen */
+  if(S.energy < S.maxEnergy){
+    S.energy = Math.min(S.maxEnergy, S.energy + regenRate() * dt);
+  }
+
+  /* passive income */
+  const ar = autoRate();
+  if(ar > 0) S.coins += ar * dt;
+
+  /* smooth counter */
+  shown += (S.coins - shown) * Math.min(1, dt * 14);
+  if(Math.abs(S.coins - shown) < 0.6) shown = S.coins;
+  balEl.textContent = fmt(shown);
+
+  /* energy UI */
+  const pct = S.energy / S.maxEnergy;
+  enFill.style.width = (pct * 100) + '%';
+  enTxt.textContent = Math.floor(S.energy);
+  energyMini.classList.toggle('low', pct < 0.2);
+  energyRing.style.strokeDashoffset = RING_CIRC * (1 - pct);
+  energyRing.classList.toggle('low', pct < 0.2);
+
+  /* turbo state */
+  coinStage.classList.toggle('turbo', Date.now() < S.turboUntil);
+
+  /* throttle heavy header updates to ~10fps */
+  hdrAccum += dt;
+  if(headerDirty || hdrAccum >= 0.1){
+    hdrAccum = 0;
+    headerDirty = false;
+    refreshHeader();
+  }
+
+  updateParticles(dt);
+  requestAnimationFrame(loop);
+}
+
+/* ================= INPUT ================= */
+crystal.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
   doTap(e.clientX, e.clientY);
-});
-tapArea.addEventListener('contextmenu', e => e.preventDefault());
+}, { passive: false });
+
+crystal.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault());
 
-/* ---------- Boosts ---------- */
-$$('.boost').forEach(btn => {
+/* ================= SHEETS ================= */
+const sheets = {
+  boost:    $('#sheet-boost'),
+  tasks:    $('#sheet-tasks'),
+  friends:  $('#sheet-friends'),
+  wallet:   $('#sheet-wallet'),
+  settings: $('#sheet-settings')
+};
+
+function openSheet(name){
+  closeSheets();
+  const s = sheets[name];
+  if(!s) return;
+  s.classList.add('open');
+  if(name === 'boost')    refreshBoostUI();
+  if(name === 'tasks')    renderTasks();
+  if(name === 'wallet')   headerDirty = true;
+}
+
+function closeSheets(){
+  Object.values(sheets).forEach(s => s.classList.remove('open'));
+  $$('.dock-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'home'));
+}
+
+$$('.dock-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const key  = btn.dataset.key;
-    const lv   = S.lv[key];
-    const cost = COST[key](lv);
-    if(S.balance < cost){
-      haptic([15, 50, 15]);
-      toast('◈ رصيدك غير كافٍ', 'err');
-      btn.animate(
-        [{ transform:'translateX(0)' },{ transform:'translateX(-6px)' },
-         { transform:'translateX(6px)' },{ transform:'translateX(0)' }],
-        { duration: 300 }
-      );
+    const tab = btn.dataset.tab;
+    if(tab === 'home'){
+      closeSheets();
+      $$('.dock-btn').forEach(b => b.classList.toggle('active', b === btn));
       return;
     }
-    S.balance -= cost;
-    S.lv[key]++;
-    switch(key){
-      case 'multi':  S.multiTap  += 1; break;
-      case 'energy': S.maxEnergy += 500; S.energy += 500; break;
-      case 'regen':  S.regen     += 2; break;
-      case 'auto':   S.passive   += 5; break;
+    $$('.dock-btn').forEach(b => b.classList.toggle('active', b === btn));
+    openSheet(tab);
+  });
+});
+
+$$('[data-close]').forEach(el => el.addEventListener('click', closeSheets));
+
+$('#settingsBtn').addEventListener('click', () => {
+  openSheet('settings');
+  $$('.dock-btn').forEach(b => b.classList.remove('active'));
+});
+
+/* ================= BOOST / UPGRADES ================= */
+const TURBO_COST  = 400;
+const REFILL_COST = 250;
+const tapCost    = () => Math.floor(500 * Math.pow(1.8, S.upgrades.tapPower - 1));
+const autoCost   = () => Math.floor(1200 * Math.pow(2, S.upgrades.autoMiner));
+const regenCost  = () => Math.floor(800 * Math.pow(1.9, S.upgrades.energyRegen - 1));
+
+function refreshBoostUI(){
+  const turboOn = Date.now() < S.turboUntil;
+
+  const tb = $('#turboBtn');
+  tb.textContent = turboOn ? 'نشط ✓' : fmt(TURBO_COST);
+  tb.disabled = turboOn || S.coins < TURBO_COST;
+
+  const rb = $('#refillBtn');
+  rb.textContent = fmt(REFILL_COST);
+  rb.disabled = S.energy >= S.maxEnergy - 1 || S.coins < REFILL_COST;
+
+  $('#tapDesc').textContent = '+' + S.upgrades.tapPower + ' عملة لكل نقرة';
+  const tb2 = $('#tapBtn');
+  tb2.textContent = fmt(tapCost());
+  tb2.disabled = S.coins < tapCost();
+
+  $('#autoDesc').textContent = S.upgrades.autoMiner > 0
+    ? '+' + autoRate() + ' عملة/ثانية'
+    : 'لا يوجد دخل تلقائي';
+  const ab = $('#autoBtn');
+  ab.textContent = fmt(autoCost());
+  ab.disabled = S.coins < autoCost();
+
+  $('#regenDesc').textContent = '+' + regenRate() + ' طاقة/ثانية';
+  const rgb = $('#regenBtn');
+  rgb.textContent = fmt(regenCost());
+  rgb.disabled = S.coins < regenCost();
+}
+
+$$('[data-buy]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.buy;
+
+    if(type === 'turbo'){
+      if(S.coins < TURBO_COST) return;
+      S.coins -= TURBO_COST;
+      S.turboUntil = Date.now() + 20000;
+      toast('🚀 تيربو ×5 مفعّل لمدة 20 ثانية!');
+      playTone(920, 0.15, 'sine');
+    } else if(type === 'refill'){
+      if(S.coins < REFILL_COST || S.energy >= S.maxEnergy - 1) return;
+      S.coins -= REFILL_COST;
+      S.energy = S.maxEnergy;
+      toast('🔋 تم تعبئة الطاقة بالكامل');
+      playTone(700, 0.15, 'sine');
+    } else if(type === 'tapPower'){
+      const c = tapCost();
+      if(S.coins < c) return;
+      S.coins -= c;
+      S.upgrades.tapPower++;
+      toast('👆 قوة النقر: +' + S.upgrades.tapPower);
+      playTone(760, 0.15, 'sine');
+    } else if(type === 'auto'){
+      const c = autoCost();
+      if(S.coins < c) return;
+      S.coins -= c;
+      S.upgrades.autoMiner++;
+      toast('🤖 الروبوت التلقائي: +' + autoRate() + '/ث');
+      playTone(760, 0.15, 'sine');
+    } else if(type === 'regen'){
+      const c = regenCost();
+      if(S.coins < c) return;
+      S.coins -= c;
+      S.upgrades.energyRegen++;
+      toast('🔋 تجديد الطاقة: +' + regenRate() + '/ث');
+      playTone(760, 0.15, 'sine');
     }
-    haptic([10, 30, 10]);
-    blip(880, 0.12, 'triangle', 0.06);
-    toast('✅ تم الترقية بنجاح!', 'ok');
-    btn.animate(
-      [{ transform:'scale(1)' },{ transform:'scale(1.1)' },{ transform:'scale(1)' }],
-      { duration: 320, easing: 'cubic-bezier(.34,1.6,.64,1)' }
-    );
-    render();
-    save(true); // حفظ فوري بعد شراء ترقية
+
+    headerDirty = true;
+    refreshBoostUI();
+    save();
   });
 });
 
-/* ---------- Bottom nav ---------- */
-$$('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    $$('.nav-item').forEach(n => n.classList.remove('active'));
-    item.classList.add('active');
-    haptic(6);
-    blip(420, 0.05, 'square', 0.03);
-    const map = {
-      home:    '🏠 الرئيسية',
-      tasks:   '🎯 المهام — قريباً',
-      friends: '👥 الأصدقاء — قريباً',
-      wallet:  '💳 المحفظة — قريباً'
-    };
-    const key = item.dataset.nav;
-    if(key !== 'home') toast(map[key]);
+/* ================= TASKS ================= */
+const TASKS = [
+  { id:'t1', icon:'📢', title:'انضم لقناة التليجرام',   reward:5000 },
+  { id:'t2', icon:'🐦', title:'تابعنا على تويتر',        reward:3000 },
+  { id:'t3', icon:'🎬', title:'شاهد الفيديو التعريفي',   reward:2000 },
+  { id:'t4', icon:'⭐', title:'صل إلى المستوى 5',        reward:8000 },
+  { id:'t5', icon:'💎', title:'اربط محفظتك',             reward:4000 }
+];
+
+function renderTasks(){
+  const box = $('#taskList');
+  box.innerHTML = '';
+
+  TASKS.forEach(task => {
+    const done = !!S.tasks[task.id];
+
+    const card = document.createElement('div');
+    card.className = 'card' + (done ? ' task-done' : '');
+    card.innerHTML =
+      '<div class="ic-box">' + task.icon + '</div>' +
+      '<div class="txt">' +
+        '<div class="t">' + task.title + '</div>' +
+        '<div class="s">المكافأة: ' + fmt(task.reward) + ' عملة</div>' +
+      '</div>' +
+      '<button class="buy"' + (done ? ' disabled' : '') + '>' +
+        (done ? 'تم ✓' : 'ابدأ') +
+      '</button>';
+
+    const b = card.querySelector('button');
+    if(!done){
+      b.addEventListener('click', () => {
+        S.tasks[task.id] = true;
+        S.coins += task.reward;
+        toast('🎁 مكافأة +' + fmt(task.reward));
+        playTone(840, 0.18, 'sine');
+        headerDirty = true;
+        renderTasks();
+        save();
+      });
+    }
+    box.appendChild(card);
   });
+}
+
+/* ================= FRIENDS ================= */
+$('#copyRef').addEventListener('click', () => {
+  const code = $('#refCode').textContent;
+  const link = 'https://nexus.app/ref/' + code;
+  const done = () => toast('📋 تم نسخ رابط الدعوة');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(done).catch(done);
+  } else {
+    done();
+  }
+  playTone(640, 0.12, 'sine');
 });
 
-/* ---------- Sound toggle ---------- */
-$('#soundBtn').addEventListener('click', e => {
+/* ================= WALLET ================= */
+$('#connectBtn').addEventListener('click', () => {
+  if(S.wallet){
+    toast('✅ المحفظة مرتبطة بالفعل');
+    return;
+  }
+  S.wallet = true;
+  S.coins += 1000;
+  toast('🔗 تم ربط المحفظة (+1,000)');
+  playTone(880, 0.18, 'sine');
+  headerDirty = true;
+  save();
+});
+
+/* ================= SETTINGS ================= */
+const soundToggle  = $('#soundToggle');
+const hapticToggle = $('#hapticToggle');
+const resetBtn     = $('#resetBtn');
+
+soundToggle.classList.toggle('on', soundOn);
+hapticToggle.classList.toggle('on', hapticOn);
+
+soundToggle.addEventListener('click', () => {
   soundOn = !soundOn;
-  e.currentTarget.textContent = soundOn ? '🔊' : '🔇';
-  haptic(8);
-  if(soundOn) blip(700, 0.08);
+  soundToggle.classList.toggle('on', soundOn);
+  if(soundOn) playTone(640, 0.12, 'sine');
+  save();
 });
 
-/* ---------- Game loop ---------- */
-let acc = 0;
-setInterval(() => {
-  if(S.energy < S.maxEnergy){
-    S.energy = Math.min(S.maxEnergy, S.energy + S.regen / 10);
-  }
-  if(S.passive > 0){
-    S.balance += S.passive / 10;
-  }
-  acc++;
-  render();
-  // حفظ كل 10 ثوانٍ (بدلاً من 3) لتقليل استدعاءات CloudStorage
-  if(acc % 100 === 0) save();
-}, 100);
-
-document.addEventListener('visibilitychange', () => {
-  if(document.hidden) save(true);
+hapticToggle.addEventListener('click', () => {
+  hapticOn = !hapticOn;
+  hapticToggle.classList.toggle('on', hapticOn);
+  if(hapticOn) haptic(20);
+  save();
 });
-window.addEventListener('beforeunload', save);
 
-/* ---------- Init ---------- */
-(async () => {
-  S = await loadState();
-  render();
-  setTimeout(() => {
-    if(hasCloud) toast('☁️ البيانات محفوظة في سحابة تلغرام');
-    else toast('👆 اضغط على العملة لتبدأ الربح');
-  }, 700);
+resetBtn.addEventListener('click', () => {
+  if(confirm('هل أنت متأكد من إعادة تعيين كل البيانات؟')){
+    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+    location.reload();
+  }
+});
+
+/* ================= RESIZE ================= */
+window.addEventListener('resize', sizeCanvas);
+window.addEventListener('orientationchange', () => setTimeout(sizeCanvas, 220));
+
+/* ================= BOOT ================= */
+sizeCanvas();
+refreshHeader();
+refreshBoostUI();
+requestAnimationFrame((t) => { lastT = t; loop(t); });
+
+setInterval(save, 5000);
+window.addEventListener('pagehide', () => {
+  try{
+    S.sound = soundOn;
+    S.haptic = hapticOn;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+  }catch(e){}
+});
+
 })();
 </script>
 </body>
