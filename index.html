@@ -2,132 +2,333 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#000000">
 <title>Reels</title>
+
+<!-- سكريبت تيليجرام Web App — يجب أن يكون أول سكريبت -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#000;color:#fff;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
-  #reels{height:100dvh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#000;color:#fff;
+            font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+
+  /* حاوية الريلز — تمرير عمودي مع snap */
+  #reels{
+    height:100dvh;height:100vh;
+    overflow-y:scroll;
+    scroll-snap-type:y mandatory;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+  }
   #reels::-webkit-scrollbar{display:none}
-  .reel{height:100dvh;scroll-snap-align:start;scroll-snap-stop:always;position:relative;background:#000}
-  .reel video{width:100%;height:100%;object-fit:contain;background:#000}
-  .caption{position:absolute;bottom:20px;right:16px;left:16px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9);font-size:15px;line-height:1.4;max-height:40%;overflow:hidden}
+
+  .reel{
+    height:100dvh;height:100vh;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    position:relative;
+    background:#000;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .reel video{
+    width:100%;height:100%;
+    object-fit:contain;
+    background:#000;
+  }
+
+  /* زر تشغيل وسط الشاشة عند الإيقاف */
+  .play-btn{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:70px;height:70px;border-radius:50%;
+    background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;pointer-events:none;
+    opacity:0;transition:opacity .2s;
+  }
+  .reel.paused .play-btn{opacity:1}
+
+  /* النص أسفل الفيديو */
+  .caption{
+    position:absolute;bottom:20px;right:14px;left:14px;
+    color:#fff;font-size:14px;line-height:1.45;
+    text-shadow:0 1px 4px rgba(0,0,0,.95);
+    max-height:38%;overflow:hidden;
+    background:linear-gradient(transparent,rgba(0,0,0,.4));
+    padding:12px 8px;border-radius:10px;
+  }
   .meta{font-size:11px;opacity:.7;margin-top:6px}
-  .actions{position:absolute;bottom:120px;left:12px;display:flex;flex-direction:column;gap:20px;font-size:26px;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
-  .actions span{cursor:pointer;user-select:none;display:flex;flex-direction:column;align-items:center;gap:2px}
-  .actions .cnt{font-size:11px;filter:none;text-shadow:none}
-  .like.liked{transform:scale(1.15);transition:transform .15s}
-  .loading,.error{height:100dvh;display:flex;align-items:center;justify-content:center;color:#888;font-size:15px;padding:20px;text-align:center;flex-direction:column;gap:8px}
-  .error{color:#f66}
-  .empty{height:100dvh;display:flex;align-items:center;justify-content:center;color:#666;flex-direction:column;gap:12px;padding:20px;text-align:center}
+
+  /* أزرار التفاعل يسار الشاشة */
+  .actions{
+    position:absolute;bottom:120px;left:10px;
+    display:flex;flex-direction:column;gap:22px;
+    font-size:26px;text-align:center;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.8));
+    z-index:2;
+  }
+  .actions .btn{
+    cursor:pointer;user-select:none;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    transition:transform .15s;
+  }
+  .actions .btn:active{transform:scale(.9)}
+  .actions .cnt{font-size:11px;filter:none;text-shadow:0 1px 2px #000}
+  .like.liked{transform:scale(1.15)}
+
+  /* شاشات التحميل / الخطأ */
+  .state{
+    height:100dvh;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;padding:24px;text-align:center;
+    color:#999;font-size:15px;
+  }
+  .state.error{color:#f66}
+  .state .sub{font-size:12px;opacity:.65;line-height:1.6;color:#ccc}
+  .state .hint{font-size:11px;opacity:.5;margin-top:12px;max-width:280px}
+  .spinner{
+    width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
+    border-top-color:#fff;border-radius:50%;
+    animation:spin .9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div id="reels"><div class="loading">جارٍ جلب الفيديوهات...</div></div>
+
+<div id="reels">
+  <div class="state">
+    <div class="spinner"></div>
+    <div>جارٍ جلب الفيديوهات...</div>
+  </div>
+</div>
 
 <script>
-/* ═══════ الإعدادات ═══════ */
-const CHANNEL = 'Crynova_dz';   // ← ضع اسم القناة بدون @ (مثال: 'mychannel')
+/* ═══════════════════════════════════════════════════════════
+   ⚙️  الإعدادات — عدّل هنا فقط
+   ═══════════════════════════════════════════════════════════ */
+const CHANNEL = 'Crynova_dz';   // ← اسم القناة بدون @ (مثال: 'mychannel')
+
+// وسطاء CORS — الكود يجرّبهم بالترتيب حتى ينجح أحدهم
 const PROXIES = [
   'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?url=',
-  'https://api.codetabs.com/v1/proxy?quest='
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://corsproxy.io/?url='
 ];
-/* ════════════════════════ */
+/* ═══════════════════════════════════════════════════════════ */
 
-async function fetchChannelHTML(){
-  const target = `https://t.me/Crynova_dz`;
-  let lastErr;
-  for (const p of PROXIES){
-    try{
-      const r = await fetch(p + encodeURIComponent(target));
-      if (r.ok) return await r.text();
-      lastErr = new Error('HTTP ' + r.status);
-    }catch(e){ lastErr = e; }
-  }
-  throw lastErr || new Error('فشل الاتصال بجميع الوسطاء');
+
+/* ─────────── تهيئة تيليجرام Web App ─────────── */
+const tg = window.Telegram?.WebApp;
+if (tg){
+  try{
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor?.('#000000');
+    tg.setBackgroundColor?.('#000000');
+    tg.disableVerticalSwipes?.();  // حتى لا يغلق التطبيق أثناء التمرير
+  }catch(e){ /* تجاهل — يعمل أيضاً خارج تيليجرام */ }
 }
 
+
+/* ─────────── أدوات مساعدة ─────────── */
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function fmtDate(iso){
+  if(!iso) return '';
+  try{
+    return new Date(iso).toLocaleDateString('ar',{
+      year:'numeric', month:'short', day:'numeric'
+    });
+  }catch{ return ''; }
+}
+
+
+/* ─────────── جلب صفحة القناة ─────────── */
+async function fetchChannelHTML(){
+  const target = `https://t.me/s/${CHANNEL}`;
+  let lastErr;
+  for (const proxy of PROXIES){
+    try{
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 15000); // مهلة 15 ثانية
+      const res = await fetch(proxy + encodeURIComponent(target), {
+        signal: ctrl.signal,
+        cache: 'no-store'
+      });
+      clearTimeout(to);
+      if (res.ok){
+        const text = await res.text();
+        if (text && text.includes('tgme_widget_message')) return text;
+        lastErr = new Error('استجابة فارغة');
+      } else {
+        lastErr = new Error('HTTP ' + res.status);
+      }
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('فشل جميع الوسطاء');
+}
+
+
+/* ─────────── استخراج الفيديوهات من HTML ─────────── */
 function parseVideos(html){
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const posts = doc.querySelectorAll('.tgme_widget_message');
   const out = [];
-  posts.forEach(p => {
-    const v = p.querySelector('video');
-    if (!v) return;
-    let src = v.getAttribute('src') || '';
+
+  posts.forEach(post => {
+    const video = post.querySelector('video');
+    if (!video) return;
+
+    let src = video.getAttribute('src') || '';
     if (!src) return;
-    if (src.startsWith('//')) src = 'https:' + src;
-    else if (src.startsWith('/')) src = 'https://t.me' + src;
-    const capEl = p.querySelector('.tgme_widget_message_text');
+    if (src.startsWith('//'))      src = 'https:' + src;
+    else if (src.startsWith('/'))  src = 'https://t.me' + src;
+
+    const capEl   = post.querySelector('.tgme_widget_message_text');
     const caption = capEl ? capEl.textContent.trim() : '';
-    const timeEl = p.querySelector('time');
-    const date = timeEl ? timeEl.getAttribute('datetime') : '';
-    const viewsEl = p.querySelector('.tgme_widget_message_views');
-    const views = viewsEl ? viewsEl.textContent.trim() : '';
-    out.push({src, caption, date, views});
+
+    const timeEl  = post.querySelector('time');
+    const date    = timeEl ? timeEl.getAttribute('datetime') : '';
+
+    const viewsEl = post.querySelector('.tgme_widget_message_views');
+    const views   = viewsEl ? viewsEl.textContent.trim() : '';
+
+    const likes   = Math.floor(Math.random() * 200) + 10; // مؤقت — عرض فقط
+
+    out.push({ src, caption, date, views, likes });
   });
+
   return out.reverse(); // الأحدث أولاً
 }
 
-function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function fmtDate(iso){ if(!iso) return ''; try{return new Date(iso).toLocaleDateString('ar',{year:'numeric',month:'short',day:'numeric'});}catch{return '';} }
 
+/* ─────────── رسم الريلز ─────────── */
 function render(reels){
   const root = document.getElementById('reels');
+
   if (!reels.length){
-    root.innerHTML = `<div class="empty"><div>لا توجد فيديوهات في آخر منشورات القناة</div><div style="font-size:12px;opacity:.6">تأكد أن القناة عامة وأن الاسم صحيح</div></div>`;
+    root.innerHTML = `
+      <div class="state">
+        <div>لا توجد فيديوهات في آخر منشورات القناة</div>
+        <div class="sub">تأكد أن القناة عامة وأن اسم <b>${escapeHtml(CHANNEL)}</b> صحيح</div>
+        <div class="hint">أرسل فيديو في القناة، أو جرّب قناة تحتوي فيديوهات حديثة</div>
+      </div>`;
     return;
   }
-  root.innerHTML = reels.map(r => `
-    <div class="reel">
-      <video src="${escapeHtml(r.src)}" loop playsinline preload="metadata" muted webkit-playsinline disablepictureinpicture controlslist="nodownload noplaybackrate"></video>
-      <div class="actions">
-        <span class="like">❤️<span class="cnt">0</span></span>
-        <span class="share">↗️<span class="cnt">مشاركة</span></span>
-      </div>
-      ${r.caption ? `<div class="caption">${escapeHtml(r.caption)}<div class="meta">${fmtDate(r.date)}${r.views ? ' · 👁 '+escapeHtml(r.views) : ''}</div></div>` : ''}
-    </div>`).join('');
 
-  const io = new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      const v = e.target;
-      if (e.intersectionRatio > 0.6){ v.muted = true; v.play().catch(()=>{}); }
-      else v.pause();
+  root.innerHTML = reels.map(r => `
+    <div class="reel paused">
+      <video src="${escapeHtml(r.src)}"
+             loop playsinline muted preload="metadata"
+             webkit-playsinline
+             disablepictureinpicture
+             controlslist="nodownload noplaybackrate"></video>
+
+      <div class="play-btn">▶</div>
+
+      <div class="actions">
+        <span class="btn like" data-count="${r.likes}">❤️<span class="cnt">${r.likes}</span></span>
+        <span class="btn share">↗️<span class="cnt">مشاركة</span></span>
+      </div>
+
+      ${r.caption ? `
+        <div class="caption">
+          ${escapeHtml(r.caption)}
+          <div class="meta">${fmtDate(r.date)}${r.views ? ' · 👁 ' + escapeHtml(r.views) : ''}</div>
+        </div>` : ''}
+    </div>
+  `).join('');
+
+  // مراقبة الفيديو المرئي ليشغّل تلقائياً
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const video = entry.target;
+      const reel  = video.parentElement;
+
+      if (entry.intersectionRatio > 0.6){
+        video.muted = true;
+        video.play().then(() => reel.classList.remove('paused')).catch(()=>{});
+      } else {
+        video.pause();
+        reel.classList.add('paused');
+      }
     });
-  }, {threshold:[0,0.6,1]});
+  }, { threshold: [0, 0.6, 1] });
+
   root.querySelectorAll('.reel video').forEach(v => io.observe(v));
 }
 
+
+/* ─────────── التفاعل مع النقر ─────────── */
 document.addEventListener('click', e => {
+
+  // زر الإعجاب
   const like = e.target.closest('.like');
   if (like){
-    like.classList.toggle('liked');
-    const c = like.querySelector('.cnt');
-    c.textContent = (+c.textContent||0) + (like.classList.contains('liked')?1:-1);
+    const liked = like.classList.toggle('liked');
+    const cnt = like.querySelector('.cnt');
+    cnt.textContent = (+like.dataset.count || 0) + (liked ? 1 : 0);
     return;
   }
+
+  // زر المشاركة
   const share = e.target.closest('.share');
   if (share){
-    const v = share.closest('.reel').querySelector('video');
-    if (navigator.share) navigator.share({url: v.src}).catch(()=>{});
-    else { navigator.clipboard?.writeText(v.src); alert('تم نسخ الرابط'); }
+    const video = share.closest('.reel').querySelector('video');
+    if (navigator.share){
+      navigator.share({ url: video.src }).catch(()=>{});
+    } else {
+      navigator.clipboard?.writeText(video.src);
+      alert('تم نسخ الرابط');
+    }
     return;
   }
-  const vid = e.target.closest('.reel')?.querySelector('video');
-  if (!vid) return;
-  if (vid.paused){ vid.muted = false; vid.play(); } else vid.pause();
+
+  // تشغيل / إيقاف الفيديو
+  const reel = e.target.closest('.reel');
+  if (!reel) return;
+  const video = reel.querySelector('video');
+  if (!video) return;
+
+  if (video.paused){
+    video.muted = false;
+    video.play().then(() => reel.classList.remove('paused')).catch(()=>{});
+  } else {
+    video.pause();
+    reel.classList.add('paused');
+  }
 });
 
-(async () => {
+
+/* ─────────── نقطة الانطلاق ─────────── */
+(async function init(){
   try{
-    const html = await fetchChannelHTML();
-    render(parseVideos(html));
-  }catch(e){
-    document.getElementById('reels').innerHTML =
-      `<div class="error">تعذر جلب الفيديوهات<div style="font-size:12px;opacity:.7;margin-top:8px">${escapeHtml(e.message)}</div><div style="font-size:11px;opacity:.5;margin-top:14px;max-width:260px">جرّب لاحقاً، أو تحقق أن القناة عامة، أو افتح الملف عبر سيرفر محلي (وليس file://)</div></div>`;
+    const html  = await fetchChannelHTML();
+    const reels = parseVideos(html);
+    render(reels);
+  }catch(err){
+    document.getElementById('reels').innerHTML = `
+      <div class="state error">
+        <div style="font-size:20px">⚠️</div>
+        <div>تعذر جلب الفيديوهات</div>
+        <div class="sub">${escapeHtml(err.message || 'خطأ غير معروف')}</div>
+        <div class="hint">
+          تحقق من:<br>
+          • أن القناة عامة (public)<br>
+          • أن الاسم صحيح بدون @<br>
+          • أن اتصالك بالإنترنت يعمل<br>
+          • أن t.me غير محجوب على شبكتك
+        </div>
+      </div>`;
   }
 })();
 </script>
+
 </body>
 </html>
