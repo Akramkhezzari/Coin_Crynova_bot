@@ -2,175 +2,650 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
 <meta name="theme-color" content="#000000">
-<title>Reels - Crynova</title>
+<title>Crynova Reels</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-  #reels{height:100dvh;height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-  #reels::-webkit-scrollbar{display:none}
-  .reel{height:100dvh;height:100vh;scroll-snap-align:start;scroll-snap-stop:always;position:relative;background:#000;display:flex;align-items:center;justify-content:center}
-  .reel video{width:100%;height:100%;object-fit:contain;background:#000}
-  .play-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-size:30px;pointer-events:none;opacity:0;transition:opacity .2s}
-  .reel.paused .play-btn{opacity:1}
-  .caption{position:absolute;bottom:20px;right:14px;left:14px;color:#fff;font-size:14px;line-height:1.45;text-shadow:0 1px 4px rgba(0,0,0,.95);max-height:38%;overflow:hidden;background:linear-gradient(transparent,rgba(0,0,0,.4));padding:12px 8px;border-radius:10px}
-  .meta{font-size:11px;opacity:.7;margin-top:6px}
-  .actions{position:absolute;bottom:120px;left:10px;display:flex;flex-direction:column;gap:22px;font-size:26px;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8));z-index:2}
-  .actions .btn{cursor:pointer;user-select:none;display:flex;flex-direction:column;align-items:center;gap:2px;transition:transform .15s}
-  .actions .btn:active{transform:scale(.9)}
-  .actions .cnt{font-size:11px;filter:none;text-shadow:0 1px 2px #000}
-  .like.liked{transform:scale(1.15)}
-  .state{height:100dvh;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;text-align:center;color:#999;font-size:15px}
-  .state.error{color:#f66}
-  .state .sub{font-size:12px;opacity:.65;line-height:1.6;color:#ccc}
-  .state .hint{font-size:11px;opacity:.5;margin-top:12px;max-width:280px}
-  .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:#fff;border-radius:50%;animation:spin .9s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
+  :root { --bg:#000; --fg:#fff; --muted:rgba(255,255,255,.65); --accent:#ff2b6a; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body {
+    height:100%; overflow:hidden; background:var(--bg); color:var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    user-select:none; -webkit-user-select:none;
+  }
+  #app { position:relative; height:100dvh; height:100vh; }
+
+  /* Top bar */
+  .top-bar {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding: calc(12px + env(safe-area-inset-top,0px)) 16px 12px;
+    display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(to bottom, rgba(0,0,0,.7), transparent);
+    pointer-events:none;
+  }
+  .top-bar > * { pointer-events:auto; }
+  .brand { font-weight:700; font-size:16px; letter-spacing:.5px; text-shadow:0 1px 4px rgba(0,0,0,.8); }
+  .icon-btn {
+    background:rgba(255,255,255,.14); border:none; color:#fff;
+    width:38px; height:38px; border-radius:50%; font-size:18px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:background .2s;
+  }
+  .icon-btn:active { background:rgba(255,255,255,.28); }
+
+  /* Reels scroller */
+  #reels {
+    height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  }
+  #reels::-webkit-scrollbar { display:none; }
+
+  .reel {
+    position:relative; height:100dvh; height:100vh;
+    scroll-snap-align:start; scroll-snap-stop:always;
+    background:#000; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; contain:layout paint;
+  }
+  .reel video {
+    width:100%; height:100%; object-fit:contain; background:#000;
+  }
+
+  /* Progress bar */
+  .progress-track {
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background:rgba(255,255,255,.15); z-index:10;
+  }
+  .progress-fill { height:100%; width:0; background:#fff; transition:width .15s linear; }
+
+  /* Mute btn */
+  .mute-btn {
+    position:absolute; top:calc(70px + env(safe-area-inset-top,0px)); right:16px;
+    width:42px; height:42px; border-radius:50%;
+    background:rgba(0,0,0,.55); backdrop-filter:blur(8px); border:none;
+    color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:10; transition:transform .15s;
+  }
+  .mute-btn:active { transform:scale(.9); }
+
+  /* Center play */
+  .center-play {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:80px; height:80px; border-radius:50%;
+    background:rgba(0,0,0,.5); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5;
+  }
+  .reel.paused .center-play { opacity:1; }
+
+  /* Actions */
+  .actions {
+    position:absolute; bottom:calc(110px + env(safe-area-inset-bottom,0px));
+    left:12px; display:flex; flex-direction:column; gap:22px; z-index:10;
+  }
+  .action {
+    background:transparent; border:none; color:#fff;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer; font-size:26px; text-shadow:0 2px 6px rgba(0,0,0,.9);
+    transition:transform .15s;
+  }
+  .action:active { transform:scale(.85); }
+  .action .count { font-size:11px; font-weight:600; opacity:.9; text-shadow:0 1px 2px #000; }
+  .action.liked .icon { color:var(--accent); }
+  .action.liked { animation:likePop .35s ease; }
+  @keyframes likePop {
+    0% { transform:scale(1); } 50% { transform:scale(1.35); } 100% { transform:scale(1); }
+  }
+
+  /* Caption */
+  .caption-area {
+    position:absolute; bottom:calc(20px + env(safe-area-inset-bottom,0px));
+    right:60px; left:60px; z-index:10;
+    background:linear-gradient(transparent, rgba(0,0,0,.55));
+    padding:14px 12px; border-radius:12px;
+  }
+  .caption {
+    font-size:14px; line-height:1.5; color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,.95);
+    max-height:4.5em; overflow:hidden;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+    white-space:pre-wrap; word-wrap:break-word; cursor:pointer;
+  }
+  .caption.expanded { max-height:50vh; overflow-y:auto; -webkit-line-clamp:unset; }
+  .caption a { color:#6cc4ff; text-decoration:none; }
+  .meta {
+    font-size:11px; opacity:.75; margin-top:6px;
+    display:flex; gap:12px; color:#ddd; flex-wrap:wrap;
+  }
+
+  /* States */
+  .state {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:16px; padding:24px; text-align:center;
+    color:#999; font-size:15px; z-index:50;
+  }
+  .state.error { color:#f66; }
+  .state .sub { font-size:12px; opacity:.7; line-height:1.6; color:#ccc; max-width:320px; }
+  .state .hint { font-size:11px; opacity:.55; margin-top:8px; max-width:300px; line-height:1.8; text-align:right; }
+  .spinner {
+    width:40px; height:40px; border:3px solid rgba(255,255,255,.15);
+    border-top-color:#fff; border-radius:50%; animation:spin .9s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Heart animation */
+  .heart-anim {
+    position:absolute; font-size:110px; pointer-events:none;
+    opacity:0; transform:scale(.3); z-index:20;
+    filter:drop-shadow(0 4px 12px rgba(255,43,106,.6));
+  }
+  .heart-anim.pop { animation:heartPop .9s ease forwards; }
+  @keyframes heartPop {
+    0% { opacity:0; transform:scale(.3); }
+    25% { opacity:1; transform:scale(1.2); }
+    55% { transform:scale(1); }
+    100% { opacity:0; transform:scale(1.4) translateY(-40px); }
+  }
+
+  /* Toast */
+  .toast {
+    position:fixed; bottom:calc(90px + env(safe-area-inset-bottom,0px));
+    left:50%; transform:translateX(-50%);
+    background:rgba(30,30,30,.95); color:#fff;
+    padding:12px 24px; border-radius:24px; font-size:14px;
+    z-index:1000; backdrop-filter:blur(12px);
+    box-shadow:0 4px 20px rgba(0,0,0,.5);
+    animation:toastIn .3s ease;
+    white-space:nowrap;
+  }
+  @keyframes toastIn {
+    from { opacity:0; transform:translate(-50%, 20px); }
+    to { opacity:1; transform:translate(-50%, 0); }
+  }
+
+  /* Skeleton */
+  .skeleton-reel {
+    height:100dvh; height:100vh; scroll-snap-align:start;
+    background:linear-gradient(110deg, #111 8%, #222 18%, #111 33%);
+    background-size:200% 100%;
+    animation:shimmer 1.5s linear infinite;
+  }
+  @keyframes shimmer { to { background-position-x:-200%; } }
 </style>
 </head>
 <body>
-<div id="reels"><div class="state"><div class="spinner"></div><div>جارٍ جلب الفيديوهات...</div></div></div>
+<div id="app">
+  <header class="top-bar">
+    <div class="brand">✦ Crynova Reels</div>
+    <button id="refresh" class="icon-btn" aria-label="تحديث">↻</button>
+  </header>
+  <div id="reels"></div>
+</div>
 <script>
-/* ═══════════════════════════════════════════════════════════
+'use strict';
+
+/* ═══════════════════════════════════════════════
    ⚙️  الإعدادات
-   ═══════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════ */
 const CHANNEL = 'Crynova_dz';
+const CACHE_KEY = 'crynova_reels_v2';
+const CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
+const FETCH_TIMEOUT = 15000;
 
-// ✅ وسيط CORS محدث: proxy.cors.dev مجاني وموثوق للطلبات العامة
-const PROXIES = [
-  'https://proxy.cors.dev/',
-  'https://api.allorigins.win/raw?url=',
-  'https://api.codetabs.com/v1/proxy?quest='
-];
-/* ═══════════════════════════════════════════════════════════ */
-
+/* ═══════════════════════════════════════════════
+   📱 Telegram WebApp
+   ═══════════════════════════════════════════════ */
 const tg = window.Telegram?.WebApp;
-if (tg){
-  try{tg.ready();tg.expand();tg.setHeaderColor?.('#000000');tg.setBackgroundColor?.('#000000');tg.disableVerticalSwipes?.();}catch(e){}
+if (tg) {
+  try {
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor?.('#000000');
+    tg.setBackgroundColor?.('#000000');
+    tg.disableVerticalSwipes?.();
+  } catch (e) {}
+}
+function haptic(type = 'light') {
+  try { tg?.HapticFeedback?.impactOccurred?.(type); } catch (e) {}
 }
 
-function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function fmtDate(iso){if(!iso)return '';try{return new Date(iso).toLocaleDateString('ar',{year:'numeric',month:'short',day:'numeric'});}catch{return '';}}
+/* ═══════════════════════════════════════════════
+   🌐 جلب البيانات عبر وسطاء CORS
+   ═══════════════════════════════════════════════ */
+const PROXIES = [
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+];
 
-async function fetchChannelHTML(){
+async function fetchChannelHTML() {
+  // كاش أولاً
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (cached && Date.now() - cached.ts < CACHE_TTL && cached.html) {
+      return cached.html;
+    }
+  } catch (e) {}
+
   const target = `https://t.me/s/${CHANNEL}`;
   let lastErr;
-  for (const proxy of PROXIES){
-    try{
+
+  for (const proxy of PROXIES) {
+    try {
       const ctrl = new AbortController();
-      const to = setTimeout(() => ctrl.abort(), 20000); // مهلة 20 ثانية
-      const res = await fetch(proxy + encodeURIComponent(target), {
-        signal: ctrl.signal,
-        cache: 'no-store'
-      });
-      clearTimeout(to);
-      if (res.ok){
-        const text = await res.text();
-        if (text && text.includes('tgme_widget_message')) return text;
-        lastErr = new Error('استجابة فارغة');
-      } else {
-        lastErr = new Error('HTTP ' + res.status);
+      const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+      const res = await fetch(proxy(target), { signal: ctrl.signal, cache: 'no-store' });
+      clearTimeout(timer);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      if (!text || !text.includes('tgme_widget_message')) {
+        throw new Error('استجابة غير صالحة');
       }
-    }catch(e){ lastErr = e; }
+
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), html: text })); } catch (e) {}
+      return text;
+    } catch (e) {
+      lastErr = e;
+      console.warn('[proxy failed]', e.message);
+    }
   }
-  throw lastErr || new Error('فشل جميع الوسطاء');
+  throw lastErr || new Error('فشل الاتصال بجميع الوسطاء');
 }
 
-function parseVideos(html){
+/* ═══════════════════════════════════════════════
+   🛠️ أدوات مساعدة
+   ═══════════════════════════════════════════════ */
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('ar', { year:'numeric', month:'short', day:'numeric' });
+  } catch { return ''; }
+}
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 320);
+  }, 1900);
+}
+
+/* ═══════════════════════════════════════════════
+   🔍 تحليل HTML القناة
+   ═══════════════════════════════════════════════ */
+function parseVideos(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const posts = doc.querySelectorAll('.tgme_widget_message');
   const out = [];
+
   posts.forEach(post => {
     const video = post.querySelector('video');
     if (!video) return;
+
     let src = video.getAttribute('src') || '';
     if (!src) return;
     if (src.startsWith('//')) src = 'https:' + src;
     else if (src.startsWith('/')) src = 'https://t.me' + src;
+
+    // Thumbnail
+    let poster = '';
+    const thumbEl = post.querySelector('.tgme_widget_message_video_thumb');
+    if (thumbEl) {
+      const m = (thumbEl.style.backgroundImage || '').match(/url\(['"]?([^'")]+)['"]?\)/);
+      if (m) poster = m[1];
+    }
+
+    // Caption
     const capEl = post.querySelector('.tgme_widget_message_text');
-    const caption = capEl ? capEl.textContent.trim() : '';
+    const captionHTML = capEl ? capEl.innerHTML.trim() : '';
+    const captionText = capEl ? capEl.textContent.trim() : '';
+
+    // Date
     const timeEl = post.querySelector('time');
-    const date = timeEl ? timeEl.getAttribute('datetime') : '';
+    const date = timeEl ? (timeEl.getAttribute('datetime') || '') : '';
+
+    // Views
     const viewsEl = post.querySelector('.tgme_widget_message_views');
     const views = viewsEl ? viewsEl.textContent.trim() : '';
-    const likes = Math.floor(Math.random() * 200) + 10;
-    out.push({ src, caption, date, views, likes });
+
+    // Post URL
+    let postUrl = '';
+    const linkEl = post.querySelector('a.tgme_widget_message_date');
+    if (linkEl) {
+      const href = linkEl.getAttribute('href') || '';
+      postUrl = href.startsWith('http') ? href : 'https://t.me' + href;
+    }
+
+    // Reactions (likes)
+    let reactions = 0;
+    post.querySelectorAll('.tgme_widget_message_reaction_count').forEach(el => {
+      const n = parseInt(el.textContent.replace(/\D/g, ''), 10);
+      if (!isNaN(n)) reactions += n;
+    });
+
+    // Message ID
+    const msgIdEl = post.querySelector('[data-post]');
+    const msgId = msgIdEl ? msgIdEl.getAttribute('data-post') : (postUrl || src);
+
+    out.push({ src, poster, captionHTML, captionText, date, views, postUrl, reactions, msgId });
   });
+
+  // الأحدث أولاً في الأسفل (ترتيب TikTok-like)
   return out.reverse();
 }
 
-function render(reels){
+/* ═══════════════════════════════════════════════
+   🎨 عرض الواجهة
+   ═══════════════════════════════════════════════ */
+function renderSkeletons(n = 2) {
+  document.getElementById('reels').innerHTML =
+    Array(n).fill('<div class="skeleton-reel"></div>').join('');
+}
+
+function render(reels) {
   const root = document.getElementById('reels');
-  if (!reels.length){
-    root.innerHTML = `<div class="state"><div>لا توجد فيديوهات في آخر منشورات القناة</div><div class="sub">تأكد أن القناة عامة وأن اسم <b>${escapeHtml(CHANNEL)}</b> صحيح</div><div class="hint">أرسل فيديو في القناة، أو جرّب قناة تحتوي فيديوهات حديثة</div></div>`;
+
+  if (!reels.length) {
+    root.innerHTML = `
+      <div class="state">
+        <div style="font-size:52px">📭</div>
+        <div>لا توجد فيديوهات</div>
+        <div class="sub">تأكد أن القناة <b>${escapeHtml(CHANNEL)}</b> تحتوي على مقاطع فيديو حديثة</div>
+        <button class="icon-btn" style="width:auto;padding:0 22px;height:42px;border-radius:22px;margin-top:12px"
+          onclick="localStorage.removeItem('${CACHE_KEY}');location.reload()">🔄 إعادة المحاولة</button>
+      </div>`;
     return;
   }
-  root.innerHTML = reels.map(r => `
-    <div class="reel paused">
-      <video src="${escapeHtml(r.src)}" loop playsinline muted preload="metadata" webkit-playsinline disablepictureinpicture controlslist="nodownload noplaybackrate"></video>
-      <div class="play-btn">▶</div>
-      <div class="actions">
-        <span class="btn like" data-count="${r.likes}">❤️<span class="cnt">${r.likes}</span></span>
-        <span class="btn share">↗️<span class="cnt">مشاركة</span></span>
-      </div>
-      ${r.caption ? `<div class="caption">${escapeHtml(r.caption)}<div class="meta">${fmtDate(r.date)}${r.views ? ' · 👁 ' + escapeHtml(r.views) : ''}</div></div>` : ''}
-    </div>
-  `).join('');
-  const io = new IntersectionObserver(entries => {
+
+  let likedSet = new Set();
+  try { likedSet = new Set(JSON.parse(localStorage.getItem(CACHE_KEY + '_likes') || '[]')); } catch (e) {}
+
+  root.innerHTML = reels.map((r, i) => {
+    const liked = likedSet.has(r.msgId);
+    const likeCount = r.reactions + (liked ? 1 : 0);
+    const safeCaption = r.captionHTML.replace(/<script[\s\S]*?<\/script>/gi, '');
+    return `
+      <div class="reel paused" data-id="${escapeHtml(r.msgId)}" data-index="${i}">
+        <video
+          src="${escapeHtml(r.src)}"
+          ${r.poster ? `poster="${escapeHtml(r.poster)}"` : ''}
+          loop muted playsinline
+          preload="${i < 2 ? 'auto' : 'metadata'}"
+          webkit-playsinline disablepictureinpicture
+          controlslist="nodownload noplaybackrate">
+        </video>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <button class="mute-btn" aria-label="كتم الصوت">🔇</button>
+        <div class="center-play">▶</div>
+        <div class="actions">
+          <button class="action like ${liked ? 'liked' : ''}" data-base="${r.reactions}">
+            <span class="icon">${liked ? '❤️' : '🤍'}</span>
+            <span class="count">${likeCount || ''}</span>
+          </button>
+          <button class="action share">
+            <span class="icon">↗️</span>
+            <span class="count">مشاركة</span>
+          </button>
+          <button class="action open">
+            <span class="icon">📱</span>
+            <span class="count">فتح</span>
+          </button>
+        </div>
+        ${(safeCaption || r.date || r.views) ? `
+          <div class="caption-area">
+            ${safeCaption ? `<div class="caption">${safeCaption}</div>` : ''}
+            <div class="meta">
+              ${r.date ? `<span>📅 ${fmtDate(r.date)}</span>` : ''}
+              ${r.views ? `<span>👁 ${escapeHtml(r.views)}</span>` : ''}
+            </div>
+          </div>
+        ` : ''}
+      </div>`;
+  }).join('');
+
+  // Store post URLs on reels
+  const reelEls = root.querySelectorAll('.reel');
+  reels.forEach((r, i) => { if (reelEls[i]) reelEls[i].dataset.url = r.postUrl || r.src; });
+
+  setupObservers();
+}
+
+/* ═══════════════════════════════════════════════
+   👁️ مراقبة التشغيل والتقدم
+   ═══════════════════════════════════════════════ */
+function setupObservers() {
+  const root = document.getElementById('reels');
+  const videos = root.querySelectorAll('.reel video');
+
+  const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const video = entry.target;
-      const reel = video.parentElement;
-      if (entry.intersectionRatio > 0.6){
+      const reel = video.closest('.reel');
+
+      if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+        reel.classList.add('active');
+
+        // Preload next video
+        const next = reel.nextElementSibling;
+        if (next && next.classList.contains('reel')) {
+          const nv = next.querySelector('video');
+          if (nv && nv.preload !== 'auto') nv.preload = 'auto';
+        }
+
+        // Autoplay muted
         video.muted = true;
-        video.play().then(() => reel.classList.remove('paused')).catch(()=>{});
+        const muteBtn = reel.querySelector('.mute-btn');
+        if (muteBtn) muteBtn.textContent = '🔇';
+
+        video.play()
+          .then(() => { reel.classList.remove('paused'); reel.classList.add('playing'); })
+          .catch(() => { reel.classList.add('paused'); });
       } else {
         video.pause();
+        reel.classList.remove('playing', 'active');
         reel.classList.add('paused');
       }
     });
-  }, { threshold: [0, 0.6, 1] });
-  root.querySelectorAll('.reel video').forEach(v => io.observe(v));
+  }, { threshold: [0, 0.5, 0.6, 0.9, 1] });
+
+  videos.forEach(v => io.observe(v));
+
+  // Progress tracking + error handling
+  videos.forEach(video => {
+    const reel = video.closest('.reel');
+    const fill = reel.querySelector('.progress-fill');
+
+    video.addEventListener('timeupdate', () => {
+      if (video.duration > 0) {
+        fill.style.width = ((video.currentTime / video.duration) * 100) + '%';
+      }
+    });
+
+    video.addEventListener('loadedmetadata', () => { fill.style.width = '0%'; });
+
+    video.addEventListener('error', () => {
+      console.warn('[video error]', video.src);
+      const muteBtn = reel.querySelector('.mute-btn');
+      if (muteBtn) muteBtn.textContent = '⚠️';
+    });
+  });
 }
 
-document.addEventListener('click', e => {
-  const like = e.target.closest('.like');
-  if (like){
-    const liked = like.classList.toggle('liked');
-    const cnt = like.querySelector('.cnt');
-    cnt.textContent = (+like.dataset.count || 0) + (liked ? 1 : 0);
+/* ═══════════════════════════════════════════════
+   🖱️ التفاعلات
+   ═══════════════════════════════════════════════ */
+document.addEventListener('click', async (e) => {
+  // Like
+  const likeBtn = e.target.closest('.like');
+  if (likeBtn) {
+    const reel = likeBtn.closest('.reel');
+    const id = reel.dataset.id;
+    const nowLiked = !likeBtn.classList.contains('liked');
+
+    likeBtn.classList.toggle('liked', nowLiked);
+    likeBtn.querySelector('.icon').textContent = nowLiked ? '❤️' : '🤍';
+
+    const base = parseInt(likeBtn.dataset.base, 10) || 0;
+    likeBtn.querySelector('.count').textContent = (base + (nowLiked ? 1 : 0)) || '';
+
+    try {
+      const set = new Set(JSON.parse(localStorage.getItem(CACHE_KEY + '_likes') || '[]'));
+      nowLiked ? set.add(id) : set.delete(id);
+      localStorage.setItem(CACHE_KEY + '_likes', JSON.stringify([...set]));
+    } catch (err) {}
+
+    haptic('light');
     return;
   }
-  const share = e.target.closest('.share');
-  if (share){
-    const video = share.closest('.reel').querySelector('video');
-    if (navigator.share){ navigator.share({ url: video.src }).catch(()=>{}); }
-    else { navigator.clipboard?.writeText(video.src); alert('تم نسخ الرابط'); }
+
+  // Share
+  const shareBtn = e.target.closest('.share');
+  if (shareBtn) {
+    const reel = shareBtn.closest('.reel');
+    const url = reel.dataset.url || reel.querySelector('video').src;
+    try {
+      if (navigator.share) await navigator.share({ url, title: 'Crynova Reels' });
+      else { await navigator.clipboard.writeText(url); toast('✅ تم نسخ الرابط'); }
+    } catch (err) { /* cancelled */ }
+    haptic('light');
     return;
   }
+
+  // Open in Telegram
+  const openBtn = e.target.closest('.open');
+  if (openBtn) {
+    const reel = openBtn.closest('.reel');
+    const url = reel.dataset.url || reel.querySelector('video').src;
+    if (url && url.startsWith('https://t.me/')) {
+      if (tg?.openTelegramLink) tg.openTelegramLink(url);
+      else window.open(url, '_blank');
+    } else {
+      try { await navigator.clipboard.writeText(url); toast('✅ تم نسخ الرابط'); } catch (e) {}
+    }
+    return;
+  }
+
+  // Mute toggle
+  const muteBtn = e.target.closest('.mute-btn');
+  if (muteBtn) {
+    const reel = muteBtn.closest('.reel');
+    const video = reel.querySelector('video');
+    video.muted = !video.muted;
+    muteBtn.textContent = video.muted ? '🔇' : '🔊';
+    haptic('light');
+    return;
+  }
+
+  // Caption expand
+  const captionEl = e.target.closest('.caption');
+  if (captionEl) {
+    captionEl.classList.toggle('expanded');
+    return;
+  }
+
+  // Tap video → play/pause
   const reel = e.target.closest('.reel');
-  if (!reel) return;
-  const video = reel.querySelector('video');
-  if (!video) return;
-  if (video.paused){
-    video.muted = false;
-    video.play().then(() => reel.classList.remove('paused')).catch(()=>{});
-  } else {
-    video.pause();
-    reel.classList.add('paused');
+  if (reel && !e.target.closest('.actions') && !e.target.closest('.caption-area')) {
+    const video = reel.querySelector('video');
+    if (!video) return;
+    if (video.paused) {
+      video.play().then(() => reel.classList.remove('paused')).catch(() => {});
+    } else {
+      video.pause();
+      reel.classList.add('paused');
+    }
   }
 });
 
-(async function init(){
-  try{
+/* ═══════════════════════════════════════════════
+   ❤️ النقر المزدوج = إعجاب
+   ═══════════════════════════════════════════════ */
+let lastTapTime = 0;
+let lastTapReel = null;
+
+document.addEventListener('touchend', (e) => {
+  const reel = e.target.closest('.reel');
+  if (!reel) return;
+  if (e.target.closest('.action') || e.target.closest('.caption-area') || e.target.closest('.mute-btn')) return;
+
+  const now = Date.now();
+  if (now - lastTapTime < 300 && lastTapReel === reel) {
+    const likeBtn = reel.querySelector('.like');
+    if (likeBtn && !likeBtn.classList.contains('liked')) likeBtn.click();
+    showHeart(reel, e.changedTouches[0]);
+    lastTapTime = 0;
+  } else {
+    lastTapTime = now;
+    lastTapReel = reel;
+  }
+}, { passive: true });
+
+function showHeart(reel, touch) {
+  const rect = reel.getBoundingClientRect();
+  const heart = document.createElement('div');
+  heart.className = 'heart-anim';
+  heart.textContent = '❤️';
+  heart.style.left = (touch.clientX - rect.left - 55) + 'px';
+  heart.style.top  = (touch.clientY - rect.top  - 55) + 'px';
+  reel.appendChild(heart);
+  requestAnimationFrame(() => heart.classList.add('pop'));
+  setTimeout(() => heart.remove(), 1000);
+}
+
+/* ═══════════════════════════════════════════════
+   🔄 إعادة التحميل + إيقاف عند إخفاء التطبيق
+   ═══════════════════════════════════════════════ */
+document.getElementById('refresh').addEventListener('click', async () => {
+  try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+  init();
+});
+
+document.addEventListener('visibilitychange', () => {
+  const vids = document.querySelectorAll('.reel video');
+  if (document.hidden) {
+    vids.forEach(v => v.pause());
+  } else {
+    const active = document.querySelector('.reel.active video');
+    if (active && active.paused) active.play().catch(() => {});
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   🚀 التشغيل
+   ═══════════════════════════════════════════════ */
+async function init() {
+  renderSkeletons(2);
+  try {
     const html = await fetchChannelHTML();
     const reels = parseVideos(html);
     render(reels);
-  }catch(err){
-    document.getElementById('reels').innerHTML = `<div class="state error"><div style="font-size:20px">⚠️</div><div>تعذر جلب الفيديوهات</div><div class="sub">${escapeHtml(err.message || 'خطأ غير معروف')}</div><div class="hint">تحقق من:<br>• أن القناة عامة (public)<br>• أن الاسم صحيح بدون @<br>• أن اتصالك بالإنترنت يعمل<br>• أن t.me غير محجوب على شبكتك</div></div>`;
+  } catch (err) {
+    document.getElementById('reels').innerHTML = `
+      <div class="state error">
+        <div style="font-size:52px">⚠️</div>
+        <div>تعذر جلب الفيديوهات</div>
+        <div class="sub">${escapeHtml(err.message || 'خطأ غير معروف')}</div>
+        <div class="hint">
+          • تأكد أن القناة عامة (public)<br>
+          • الاسم صحيح بدون @<br>
+          • اتصالك بالإنترنت يعمل<br>
+          • t.me غير محجوب على شبكتك
+        </div>
+        <button class="icon-btn" style="width:auto;padding:0 22px;height:42px;border-radius:22px;margin-top:12px"
+          onclick="localStorage.removeItem('${CACHE_KEY}');location.reload()">🔄 إعادة المحاولة</button>
+      </div>`;
   }
-})();
+}
+
+init();
 </script>
 </body>
 </html>
