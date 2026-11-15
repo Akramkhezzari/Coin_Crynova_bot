@@ -7,175 +7,143 @@
 <title>Crynova Reels</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root { --bg:#000; --fg:#fff; --muted:rgba(255,255,255,.65); --accent:#ff2b6a; }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body {
-    height:100%; overflow:hidden; background:var(--bg); color:var(--fg);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    user-select:none; -webkit-user-select:none;
-  }
-  #app { position:relative; height:100dvh; height:100vh; }
+  :root{--bg:#000;--fg:#fff;--accent:#ff2b6a;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none}
+  #app{position:relative;height:100dvh;height:100vh}
 
-  /* Top bar */
-  .top-bar {
-    position:fixed; top:0; left:0; right:0; z-index:100;
-    padding: calc(12px + env(safe-area-inset-top,0px)) 16px 12px;
-    display:flex; justify-content:space-between; align-items:center;
-    background:linear-gradient(to bottom, rgba(0,0,0,.7), transparent);
-    pointer-events:none;
-  }
-  .top-bar > * { pointer-events:auto; }
-  .brand { font-weight:700; font-size:16px; letter-spacing:.5px; text-shadow:0 1px 4px rgba(0,0,0,.8); }
-  .icon-btn {
-    background:rgba(255,255,255,.14); border:none; color:#fff;
-    width:38px; height:38px; border-radius:50%; font-size:18px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; transition:background .2s;
-  }
-  .icon-btn:active { background:rgba(255,255,255,.28); }
+  .top-bar{position:fixed;top:0;left:0;right:0;z-index:100;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;
+    display:flex;justify-content:space-between;align-items:center;
+    background:linear-gradient(to bottom,rgba(0,0,0,.75),transparent);pointer-events:none}
+  .top-bar>*{pointer-events:auto}
+  .brand{font-weight:700;font-size:16px;letter-spacing:.5px;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+  .brand span{color:var(--accent)}
+  .icon-btn{background:rgba(255,255,255,.14);border:none;color:#fff;width:38px;height:38px;
+    border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;transition:background .2s}
+  .icon-btn:active{background:rgba(255,255,255,.3)}
 
-  /* Reels scroller */
-  #reels {
-    height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;
-    scrollbar-width:none; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
-  }
-  #reels::-webkit-scrollbar { display:none; }
+  #reels{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  #reels::-webkit-scrollbar{display:none}
 
-  .reel {
-    position:relative; height:100dvh; height:100vh;
-    scroll-snap-align:start; scroll-snap-stop:always;
-    background:#000; display:flex; align-items:center; justify-content:center;
-    overflow:hidden; contain:layout paint;
-  }
-  .reel video {
-    width:100%; height:100%; object-fit:contain; background:#000;
-  }
+  .reel{position:relative;height:100dvh;height:100vh;scroll-snap-align:start;
+    scroll-snap-stop:always;background:#000;display:flex;align-items:center;
+    justify-content:center;overflow:hidden;contain:layout paint}
+  .reel video{width:100%;height:100%;object-fit:contain;background:#000}
 
-  /* Progress bar */
-  .progress-track {
-    position:absolute; top:0; left:0; right:0; height:3px;
-    background:rgba(255,255,255,.15); z-index:10;
-  }
-  .progress-fill { height:100%; width:0; background:#fff; transition:width .15s linear; }
+  .progress-track{position:absolute;top:0;left:0;right:0;height:3px;
+    background:rgba(255,255,255,.15);z-index:10}
+  .progress-fill{height:100%;width:0;background:#fff;transition:width .15s linear}
 
-  /* Mute btn */
-  .mute-btn {
-    position:absolute; top:calc(70px + env(safe-area-inset-top,0px)); right:16px;
-    width:42px; height:42px; border-radius:50%;
-    background:rgba(0,0,0,.55); backdrop-filter:blur(8px); border:none;
-    color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; z-index:10; transition:transform .15s;
-  }
-  .mute-btn:active { transform:scale(.9); }
+  .mute-btn{position:absolute;top:calc(70px + env(safe-area-inset-top,0px));right:16px;
+    width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.55);
+    backdrop-filter:blur(8px);border:none;color:#fff;font-size:18px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10}
+  .mute-btn:active{transform:scale(.9)}
 
-  /* Center play */
-  .center-play {
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:80px; height:80px; border-radius:50%;
-    background:rgba(0,0,0,.5); backdrop-filter:blur(6px);
-    display:flex; align-items:center; justify-content:center;
-    font-size:32px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5;
-  }
-  .reel.paused .center-play { opacity:1; }
+  .center-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:80px;height:80px;border-radius:50%;background:rgba(0,0,0,.5);
+    backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;
+    font-size:32px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+  .reel.paused .center-play{opacity:1}
 
-  /* Actions */
-  .actions {
-    position:absolute; bottom:calc(110px + env(safe-area-inset-bottom,0px));
-    left:12px; display:flex; flex-direction:column; gap:22px; z-index:10;
-  }
-  .action {
-    background:transparent; border:none; color:#fff;
-    display:flex; flex-direction:column; align-items:center; gap:4px;
-    cursor:pointer; font-size:26px; text-shadow:0 2px 6px rgba(0,0,0,.9);
-    transition:transform .15s;
-  }
-  .action:active { transform:scale(.85); }
-  .action .count { font-size:11px; font-weight:600; opacity:.9; text-shadow:0 1px 2px #000; }
-  .action.liked .icon { color:var(--accent); }
-  .action.liked { animation:likePop .35s ease; }
-  @keyframes likePop {
-    0% { transform:scale(1); } 50% { transform:scale(1.35); } 100% { transform:scale(1); }
-  }
+  .actions{position:absolute;bottom:calc(110px + env(safe-area-inset-bottom,0px));
+    left:12px;display:flex;flex-direction:column;gap:22px;z-index:10}
+  .action{background:transparent;border:none;color:#fff;display:flex;flex-direction:column;
+    align-items:center;gap:4px;cursor:pointer;font-size:26px;
+    text-shadow:0 2px 6px rgba(0,0,0,.9);transition:transform .15s}
+  .action:active{transform:scale(.85)}
+  .action .count{font-size:11px;font-weight:600;opacity:.9;text-shadow:0 1px 2px #000}
+  .action.liked .icon{color:var(--accent)}
+  .action.liked{animation:likePop .35s ease}
+  @keyframes likePop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
 
-  /* Caption */
-  .caption-area {
-    position:absolute; bottom:calc(20px + env(safe-area-inset-bottom,0px));
-    right:60px; left:60px; z-index:10;
-    background:linear-gradient(transparent, rgba(0,0,0,.55));
-    padding:14px 12px; border-radius:12px;
-  }
-  .caption {
-    font-size:14px; line-height:1.5; color:#fff;
-    text-shadow:0 1px 4px rgba(0,0,0,.95);
-    max-height:4.5em; overflow:hidden;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
-    white-space:pre-wrap; word-wrap:break-word; cursor:pointer;
-  }
-  .caption.expanded { max-height:50vh; overflow-y:auto; -webkit-line-clamp:unset; }
-  .caption a { color:#6cc4ff; text-decoration:none; }
-  .meta {
-    font-size:11px; opacity:.75; margin-top:6px;
-    display:flex; gap:12px; color:#ddd; flex-wrap:wrap;
-  }
+  .caption-area{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));
+    right:60px;left:60px;z-index:10;
+    background:linear-gradient(transparent,rgba(0,0,0,.55));
+    padding:14px 12px;border-radius:12px}
+  .caption{font-size:14px;line-height:1.5;color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,.95);max-height:4.5em;overflow:hidden;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+    white-space:pre-wrap;word-wrap:break-word;cursor:pointer}
+  .caption.expanded{max-height:50vh;overflow-y:auto;-webkit-line-clamp:unset}
+  .caption a{color:#6cc4ff;text-decoration:none}
+  .meta{font-size:11px;opacity:.75;margin-top:6px;display:flex;gap:12px;
+    color:#ddd;flex-wrap:wrap}
 
-  /* States */
-  .state {
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:16px; padding:24px; text-align:center;
-    color:#999; font-size:15px; z-index:50;
-  }
-  .state.error { color:#f66; }
-  .state .sub { font-size:12px; opacity:.7; line-height:1.6; color:#ccc; max-width:320px; }
-  .state .hint { font-size:11px; opacity:.55; margin-top:8px; max-width:300px; line-height:1.8; text-align:right; }
-  .spinner {
-    width:40px; height:40px; border:3px solid rgba(255,255,255,.15);
-    border-top-color:#fff; border-radius:50%; animation:spin .9s linear infinite;
-  }
-  @keyframes spin { to { transform:rotate(360deg); } }
+  /* ── Diagnostic panel ── */
+  .diag{position:absolute;inset:0;display:flex;align-items:flex-start;
+    justify-content:center;padding:24px;overflow-y:auto;z-index:50;
+    background:var(--bg);direction:rtl}
+  .diag-inner{max-width:460px;width:100%;margin:auto;padding-top:40px;padding-bottom:40px}
+  .diag h2{font-size:20px;margin-bottom:8px;text-align:center}
+  .diag .lead{font-size:13px;opacity:.7;text-align:center;margin-bottom:24px;line-height:1.6}
+  .diag-card{background:#111;border:1px solid #222;border-radius:14px;
+    padding:16px;margin-bottom:14px}
+  .diag-row{display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid #1f1f1f;font-size:13px}
+  .diag-row:last-child{border-bottom:none;padding-bottom:0}
+  .diag-row:first-child{padding-top:0}
+  .diag-label{opacity:.8}
+  .diag-status{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:12px}
+  .diag-status.ok{color:var(--ok)}
+  .diag-status.err{color:var(--err)}
+  .diag-status.warn{color:var(--warn)}
+  .diag-status.pending{color:#888}
+  .dot{width:8px;height:8px;border-radius:50%;background:currentColor;
+    display:inline-block}
+  .spin-mini{display:inline-block;width:10px;height:10px;border:2px solid #333;
+    border-top-color:#888;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* Heart animation */
-  .heart-anim {
-    position:absolute; font-size:110px; pointer-events:none;
-    opacity:0; transform:scale(.3); z-index:20;
-    filter:drop-shadow(0 4px 12px rgba(255,43,106,.6));
-  }
-  .heart-anim.pop { animation:heartPop .9s ease forwards; }
-  @keyframes heartPop {
-    0% { opacity:0; transform:scale(.3); }
-    25% { opacity:1; transform:scale(1.2); }
-    55% { transform:scale(1); }
-    100% { opacity:0; transform:scale(1.4) translateY(-40px); }
-  }
+  .diag-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+  .btn{flex:1;min-width:140px;padding:13px 18px;border-radius:12px;border:none;
+    font-size:14px;font-weight:600;cursor:pointer;transition:transform .15s;
+    font-family:inherit}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-secondary{background:#222;color:#fff;border:1px solid #333}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .diag-input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #333;
+    background:#0a0a0a;color:#fff;font-size:13px;font-family:inherit;
+    margin-top:8px;direction:ltr;text-align:left}
+  .diag-input:focus{outline:none;border-color:var(--accent)}
+  .diag-help{font-size:11px;opacity:.6;line-height:1.7;margin-top:10px;padding:12px;
+    background:#0a0a0a;border-radius:10px;border-right:3px solid var(--accent)}
+  .diag-help b{color:#fff}
+  .diag-help code{background:#1a1a1a;padding:1px 6px;border-radius:4px;
+    font-size:11px;direction:ltr;display:inline-block;color:#6cc4ff}
 
   /* Toast */
-  .toast {
-    position:fixed; bottom:calc(90px + env(safe-area-inset-bottom,0px));
-    left:50%; transform:translateX(-50%);
-    background:rgba(30,30,30,.95); color:#fff;
-    padding:12px 24px; border-radius:24px; font-size:14px;
-    z-index:1000; backdrop-filter:blur(12px);
-    box-shadow:0 4px 20px rgba(0,0,0,.5);
-    animation:toastIn .3s ease;
-    white-space:nowrap;
-  }
-  @keyframes toastIn {
-    from { opacity:0; transform:translate(-50%, 20px); }
-    to { opacity:1; transform:translate(-50%, 0); }
-  }
+  .toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom,0px));
+    left:50%;transform:translateX(-50%);background:rgba(30,30,30,.95);color:#fff;
+    padding:12px 24px;border-radius:24px;font-size:14px;z-index:1000;
+    backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.5);
+    animation:toastIn .3s ease;white-space:nowrap}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}
+    to{opacity:1;transform:translate(-50%,0)}}
 
-  /* Skeleton */
-  .skeleton-reel {
-    height:100dvh; height:100vh; scroll-snap-align:start;
-    background:linear-gradient(110deg, #111 8%, #222 18%, #111 33%);
-    background-size:200% 100%;
-    animation:shimmer 1.5s linear infinite;
-  }
-  @keyframes shimmer { to { background-position-x:-200%; } }
+  .skeleton-reel{height:100dvh;height:100vh;scroll-snap-align:start;
+    background:linear-gradient(110deg,#111 8%,#222 18%,#111 33%);
+    background-size:200% 100%;animation:shimmer 1.5s linear infinite}
+  @keyframes shimmer{to{background-position-x:-200%}}
+
+  .heart-anim{position:absolute;font-size:110px;pointer-events:none;opacity:0;
+    transform:scale(.3);z-index:20;filter:drop-shadow(0 4px 12px rgba(255,43,106,.6))}
+  .heart-anim.pop{animation:heartPop .9s ease forwards}
+  @keyframes heartPop{0%{opacity:0;transform:scale(.3)}
+    25%{opacity:1;transform:scale(1.2)}55%{transform:scale(1)}
+    100%{opacity:0;transform:scale(1.4) translateY(-40px)}}
 </style>
 </head>
 <body>
 <div id="app">
   <header class="top-bar">
-    <div class="brand">✦ Crynova Reels</div>
+    <div class="brand">✦ <span>Crynova</span> Reels</div>
     <button id="refresh" class="icon-btn" aria-label="تحديث">↻</button>
   </header>
   <div id="reels"></div>
@@ -183,359 +151,384 @@
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════════
-   ⚙️  الإعدادات
-   ═══════════════════════════════════════════════ */
-const CHANNEL = 'Crynova_dz';
-const CACHE_KEY = 'crynova_reels_v2';
-const CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
-const FETCH_TIMEOUT = 15000;
+/* ═══════════════════════════════════════════════════
+   ⚙️ الإعدادات
+   ═══════════════════════════════════════════════════ */
+let CHANNEL = localStorage.getItem('crynova_channel') || 'Crynova_dz';
+const CACHE_KEY = 'crynova_reels_v3';
+const CUSTOM_PROXY_KEY = 'crynova_custom_proxy';
+const CACHE_TTL = 5 * 60 * 1000;
+const FETCH_TIMEOUT = 12000;
 
-/* ═══════════════════════════════════════════════
+const PROXIES = [
+  { id:'allorigins', name:'AllOrigins',
+    build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
+  { id:'corslol', name:'CORS.lol',
+    build: u => `https://api.cors.lol/?url=${encodeURIComponent(u)}` },
+  { id:'corsfix', name:'CORSFIX',
+    build: u => `https://proxy.corsfix.com/?${u}` },
+  { id:'thingproxy', name:'ThingProxy',
+    build: u => `https://thingproxy.freeboard.io/fetch/${u}` },
+  { id:'corseu', name:'CORS.eu.org',
+    build: u => `https://cors.eu.org/${u}` },
+];
+
+/* ═══════════════════════════════════════════════════
    📱 Telegram WebApp
-   ═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 const tg = window.Telegram?.WebApp;
 if (tg) {
   try {
-    tg.ready();
-    tg.expand();
-    tg.setHeaderColor?.('#000000');
-    tg.setBackgroundColor?.('#000000');
+    tg.ready(); tg.expand();
+    tg.setHeaderColor?.('#000000'); tg.setBackgroundColor?.('#000000');
     tg.disableVerticalSwipes?.();
   } catch (e) {}
 }
-function haptic(type = 'light') {
-  try { tg?.HapticFeedback?.impactOccurred?.(type); } catch (e) {}
+function haptic(t='light'){ try{ tg?.HapticFeedback?.impactOccurred?.(t); }catch(e){} }
+
+/* ═══════════════════════════════════════════════════
+   🛠️ أدوات
+   ═══════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const escapeHtml = s => String(s||'').replace(/[&<>"']/g,c=>({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[c]));
+function fmtDate(iso){
+  if(!iso) return '';
+  try{ return new Date(iso).toLocaleDateString('ar',{year:'numeric',month:'short',day:'numeric'}); }
+  catch{ return ''; }
+}
+function toast(msg, ms=2200){
+  const el = document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>{
+    el.style.transition='opacity .3s'; el.style.opacity='0';
+    setTimeout(()=>el.remove(),320);
+  }, ms);
 }
 
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    🌐 جلب البيانات عبر وسطاء CORS
-   ═══════════════════════════════════════════════ */
-const PROXIES = [
-  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-];
+   ═══════════════════════════════════════════════════ */
+async function tryFetch(url, timeout=FETCH_TIMEOUT){
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), timeout);
+  try{
+    const res = await fetch(url, { signal: ctrl.signal, cache:'no-store' });
+    clearTimeout(timer);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text = await res.text();
+    return text;
+  } catch(e){
+    clearTimeout(timer);
+    throw new Error(e.name === 'AbortError' ? 'انتهت المهلة' : (e.message || 'خطأ شبكة'));
+  }
+}
 
-async function fetchChannelHTML() {
-  // كاش أولاً
-  try {
-    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-    if (cached && Date.now() - cached.ts < CACHE_TTL && cached.html) {
-      return cached.html;
-    }
-  } catch (e) {}
-
+async function checkChannelDirect(){
+  // للتحقق إن كانت القناة موجودة، نجرب جلبها مع أول وسيط
   const target = `https://t.me/s/${CHANNEL}`;
-  let lastErr;
+  const proxy = PROXIES[0];
+  try{
+    const html = await tryFetch(proxy.build(target), 10000);
+    // كشف الأخطاء في المحتوى
+    if (/tgme_page_extra|channel.*not.*found|not.*exist/i.test(html) && !html.includes('tgme_widget_message')){
+      return { exists:false, reason:'القناة غير موجودة أو خاصة' };
+    }
+    if (/tgme_widget_message/.test(html)) return { exists:true, html };
+    // صفحة قناة موجودة لكن بلا منشورات فيديو
+    if (/tgme_page/.test(html)) return { exists:true, html, empty:true };
+    return { exists:false, reason:'رد غير متوقع من تيليجرام' };
+  } catch(e){
+    return { exists:null, reason: e.message };
+  }
+}
 
-  for (const proxy of PROXIES) {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
-      const res = await fetch(proxy(target), { signal: ctrl.signal, cache: 'no-store' });
-      clearTimeout(timer);
+async function fetchAll(){
+  const target = `https://t.me/s/${CHANNEL}`;
+  const results = [];
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
-      if (!text || !text.includes('tgme_widget_message')) {
-        throw new Error('استجابة غير صالحة');
-      }
+  // جرّب كل الوسيط بالتوازي
+  const promises = PROXIES.map(async (proxy) => {
+    try{
+      const html = await tryFetch(proxy.build(target));
+      if (html.includes('tgme_widget_message')) return { proxy, html, status:'ok' };
+      if (html.includes('tgme_page')) return { proxy, html, status:'empty' };
+      return { proxy, status:'err', error:'لا يوجد محتوى متوقع' };
+    } catch(e){
+      return { proxy, status:'err', error: e.message };
+    }
+  });
 
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), html: text })); } catch (e) {}
-      return text;
-    } catch (e) {
-      lastErr = e;
-      console.warn('[proxy failed]', e.message);
+  // نأخذ أول ناجح
+  const all = await Promise.all(promises);
+  for (const r of all) {
+    results.push(r);
+    if (r.status === 'ok' || r.status === 'empty') {
+      // بعد الحصول على نتيجة، نمنع باقي العمليات (لا يمكن إلغاؤها فعلياً لكن نتجاهلها)
+      return { ok:true, html: r.html, proxy: r.proxy, empty: r.status==='empty', diag: all };
     }
   }
-  throw lastErr || new Error('فشل الاتصال بجميع الوسطاء');
+  return { ok:false, diag: all };
 }
 
-/* ═══════════════════════════════════════════════
-   🛠️ أدوات مساعدة
-   ═══════════════════════════════════════════════ */
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-function fmtDate(iso) {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleDateString('ar', { year:'numeric', month:'short', day:'numeric' });
-  } catch { return ''; }
-}
-function toast(msg) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => {
-    el.style.transition = 'opacity .3s';
-    el.style.opacity = '0';
-    setTimeout(() => el.remove(), 320);
-  }, 1900);
-}
-
-/* ═══════════════════════════════════════════════
-   🔍 تحليل HTML القناة
-   ═══════════════════════════════════════════════ */
-function parseVideos(html) {
+/* ═══════════════════════════════════════════════════
+   🔍 تحليل HTML
+   ═══════════════════════════════════════════════════ */
+function parseVideos(html){
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const posts = doc.querySelectorAll('.tgme_widget_message');
   const out = [];
 
   posts.forEach(post => {
     const video = post.querySelector('video');
-    if (!video) return;
-
+    if(!video) return;
     let src = video.getAttribute('src') || '';
-    if (!src) return;
-    if (src.startsWith('//')) src = 'https:' + src;
-    else if (src.startsWith('/')) src = 'https://t.me' + src;
+    if(!src) return;
+    if(src.startsWith('//')) src = 'https:' + src;
+    else if(src.startsWith('/')) src = 'https://t.me' + src;
 
-    // Thumbnail
     let poster = '';
     const thumbEl = post.querySelector('.tgme_widget_message_video_thumb');
-    if (thumbEl) {
+    if(thumbEl){
       const m = (thumbEl.style.backgroundImage || '').match(/url\(['"]?([^'")]+)['"]?\)/);
-      if (m) poster = m[1];
+      if(m) poster = m[1];
     }
 
-    // Caption
     const capEl = post.querySelector('.tgme_widget_message_text');
     const captionHTML = capEl ? capEl.innerHTML.trim() : '';
-    const captionText = capEl ? capEl.textContent.trim() : '';
 
-    // Date
     const timeEl = post.querySelector('time');
     const date = timeEl ? (timeEl.getAttribute('datetime') || '') : '';
 
-    // Views
     const viewsEl = post.querySelector('.tgme_widget_message_views');
     const views = viewsEl ? viewsEl.textContent.trim() : '';
 
-    // Post URL
     let postUrl = '';
     const linkEl = post.querySelector('a.tgme_widget_message_date');
-    if (linkEl) {
+    if(linkEl){
       const href = linkEl.getAttribute('href') || '';
       postUrl = href.startsWith('http') ? href : 'https://t.me' + href;
     }
 
-    // Reactions (likes)
     let reactions = 0;
     post.querySelectorAll('.tgme_widget_message_reaction_count').forEach(el => {
-      const n = parseInt(el.textContent.replace(/\D/g, ''), 10);
-      if (!isNaN(n)) reactions += n;
+      const n = parseInt(el.textContent.replace(/\D/g,''), 10);
+      if(!isNaN(n)) reactions += n;
     });
 
-    // Message ID
     const msgIdEl = post.querySelector('[data-post]');
     const msgId = msgIdEl ? msgIdEl.getAttribute('data-post') : (postUrl || src);
 
-    out.push({ src, poster, captionHTML, captionText, date, views, postUrl, reactions, msgId });
+    out.push({ src, poster, captionHTML, date, views, postUrl, reactions, msgId });
   });
 
-  // الأحدث أولاً في الأسفل (ترتيب TikTok-like)
   return out.reverse();
 }
 
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    🎨 عرض الواجهة
-   ═══════════════════════════════════════════════ */
-function renderSkeletons(n = 2) {
-  document.getElementById('reels').innerHTML =
-    Array(n).fill('<div class="skeleton-reel"></div>').join('');
+   ═══════════════════════════════════════════════════ */
+function renderSkeletons(n=2){
+  $('reels').innerHTML = Array(n).fill('<div class="skeleton-reel"></div>').join('');
 }
 
-function render(reels) {
-  const root = document.getElementById('reels');
+function renderDiagnostic(state){
+  // state = { title, status, rows:[{label,status,detail}], help, actions }
+  const html = `
+    <div class="diag">
+      <div class="diag-inner">
+        <h2>${state.title}</h2>
+        <div class="lead">${state.lead || ''}</div>
+        <div class="diag-card">
+          ${state.rows.map(r => `
+            <div class="diag-row">
+              <span class="diag-label">${r.label}</span>
+              <span class="diag-status ${r.status}">
+                <span class="dot"></span>${r.detail}
+              </span>
+            </div>
+          `).join('')}
+        </div>
+        ${state.help ? `<div class="diag-help">${state.help}</div>` : ''}
+        <div class="diag-actions">
+          <button class="btn btn-primary" onclick="location.reload()">🔄 إعادة المحاولة</button>
+          <button class="btn btn-secondary" onclick="changeChannel()">📢 تغيير القناة</button>
+        </div>
+      </div>
+    </div>`;
+  $('reels').innerHTML = html;
+}
 
-  if (!reels.length) {
-    root.innerHTML = `
-      <div class="state">
-        <div style="font-size:52px">📭</div>
-        <div>لا توجد فيديوهات</div>
-        <div class="sub">تأكد أن القناة <b>${escapeHtml(CHANNEL)}</b> تحتوي على مقاطع فيديو حديثة</div>
-        <button class="icon-btn" style="width:auto;padding:0 22px;height:42px;border-radius:22px;margin-top:12px"
-          onclick="localStorage.removeItem('${CACHE_KEY}');location.reload()">🔄 إعادة المحاولة</button>
-      </div>`;
+function renderReels(reels){
+  if(!reels.length){
+    renderDiagnostic({
+      title:'لا توجد فيديوهات',
+      lead:`القناة <b>@${escapeHtml(CHANNEL)}</b> موجودة لكن لا تحتوي على مقاطع فيديو حديثة.`,
+      rows:[
+        { label:'القناة', status:'warn', detail:'موجودة' },
+        { label:'الفيديوهات', status:'warn', detail:'0 فيديو' }
+      ],
+      help:`<b>الحلول:</b><br>
+        • تأكد أن القناة تحتوي منشورات فيديو حديثة<br>
+        • جرّب قناة أخرى عبر زر "تغيير القناة"<br>
+        • بعض القنوات تحتاج تحديثاً يدوياً من <code>t.me/s/${escapeHtml(CHANNEL)}</code>`,
+    });
     return;
   }
 
   let likedSet = new Set();
-  try { likedSet = new Set(JSON.parse(localStorage.getItem(CACHE_KEY + '_likes') || '[]')); } catch (e) {}
+  try{ likedSet = new Set(JSON.parse(localStorage.getItem(CACHE_KEY+'_likes')||'[]')); }catch(e){}
 
-  root.innerHTML = reels.map((r, i) => {
+  const html = reels.map((r,i) => {
     const liked = likedSet.has(r.msgId);
     const likeCount = r.reactions + (liked ? 1 : 0);
-    const safeCaption = r.captionHTML.replace(/<script[\s\S]*?<\/script>/gi, '');
+    const safeCaption = (r.captionHTML || '').replace(/<script[\s\S]*?<\/script>/gi,'');
     return `
-      <div class="reel paused" data-id="${escapeHtml(r.msgId)}" data-index="${i}">
+      <div class="reel paused" data-id="${escapeHtml(r.msgId)}">
         <video
           src="${escapeHtml(r.src)}"
           ${r.poster ? `poster="${escapeHtml(r.poster)}"` : ''}
           loop muted playsinline
-          preload="${i < 2 ? 'auto' : 'metadata'}"
+          preload="${i<2?'auto':'metadata'}"
           webkit-playsinline disablepictureinpicture
-          controlslist="nodownload noplaybackrate">
-        </video>
+          controlslist="nodownload noplaybackrate"></video>
         <div class="progress-track"><div class="progress-fill"></div></div>
-        <button class="mute-btn" aria-label="كتم الصوت">🔇</button>
+        <button class="mute-btn" aria-label="كتم">🔇</button>
         <div class="center-play">▶</div>
         <div class="actions">
-          <button class="action like ${liked ? 'liked' : ''}" data-base="${r.reactions}">
-            <span class="icon">${liked ? '❤️' : '🤍'}</span>
-            <span class="count">${likeCount || ''}</span>
+          <button class="action like ${liked?'liked':''}" data-base="${r.reactions}">
+            <span class="icon">${liked?'❤️':'🤍'}</span>
+            <span class="count">${likeCount||''}</span>
           </button>
           <button class="action share">
-            <span class="icon">↗️</span>
-            <span class="count">مشاركة</span>
+            <span class="icon">↗️</span><span class="count">مشاركة</span>
           </button>
           <button class="action open">
-            <span class="icon">📱</span>
-            <span class="count">فتح</span>
+            <span class="icon">📱</span><span class="count">فتح</span>
           </button>
         </div>
-        ${(safeCaption || r.date || r.views) ? `
+        ${(safeCaption||r.date||r.views) ? `
           <div class="caption-area">
             ${safeCaption ? `<div class="caption">${safeCaption}</div>` : ''}
             <div class="meta">
               ${r.date ? `<span>📅 ${fmtDate(r.date)}</span>` : ''}
               ${r.views ? `<span>👁 ${escapeHtml(r.views)}</span>` : ''}
             </div>
-          </div>
-        ` : ''}
+          </div>` : ''}
       </div>`;
   }).join('');
 
-  // Store post URLs on reels
-  const reelEls = root.querySelectorAll('.reel');
-  reels.forEach((r, i) => { if (reelEls[i]) reelEls[i].dataset.url = r.postUrl || r.src; });
+  $('reels').innerHTML = html;
+
+  const reelEls = $('reels').querySelectorAll('.reel');
+  reels.forEach((r,i) => {
+    if(reelEls[i]) reelEls[i].dataset.url = r.postUrl || r.src;
+  });
 
   setupObservers();
 }
 
-/* ═══════════════════════════════════════════════
-   👁️ مراقبة التشغيل والتقدم
-   ═══════════════════════════════════════════════ */
-function setupObservers() {
-  const root = document.getElementById('reels');
+/* ═══════════════════════════════════════════════════
+   👁️ مراقبة التشغيل
+   ═══════════════════════════════════════════════════ */
+function setupObservers(){
+  const root = $('reels');
   const videos = root.querySelectorAll('.reel video');
 
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       const video = entry.target;
       const reel = video.closest('.reel');
-
-      if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+      if(entry.isIntersecting && entry.intersectionRatio > 0.6){
         reel.classList.add('active');
-
-        // Preload next video
         const next = reel.nextElementSibling;
-        if (next && next.classList.contains('reel')) {
+        if(next && next.classList.contains('reel')){
           const nv = next.querySelector('video');
-          if (nv && nv.preload !== 'auto') nv.preload = 'auto';
+          if(nv && nv.preload !== 'auto') nv.preload = 'auto';
         }
-
-        // Autoplay muted
         video.muted = true;
-        const muteBtn = reel.querySelector('.mute-btn');
-        if (muteBtn) muteBtn.textContent = '🔇';
-
+        const mb = reel.querySelector('.mute-btn');
+        if(mb) mb.textContent = '🔇';
         video.play()
-          .then(() => { reel.classList.remove('paused'); reel.classList.add('playing'); })
-          .catch(() => { reel.classList.add('paused'); });
+          .then(()=>{ reel.classList.remove('paused'); })
+          .catch(()=>{ reel.classList.add('paused'); });
       } else {
         video.pause();
-        reel.classList.remove('playing', 'active');
+        reel.classList.remove('active');
         reel.classList.add('paused');
       }
     });
-  }, { threshold: [0, 0.5, 0.6, 0.9, 1] });
+  }, { threshold:[0,0.5,0.6,0.9,1] });
 
   videos.forEach(v => io.observe(v));
 
-  // Progress tracking + error handling
   videos.forEach(video => {
     const reel = video.closest('.reel');
     const fill = reel.querySelector('.progress-fill');
-
     video.addEventListener('timeupdate', () => {
-      if (video.duration > 0) {
-        fill.style.width = ((video.currentTime / video.duration) * 100) + '%';
+      if(video.duration > 0){
+        fill.style.width = ((video.currentTime/video.duration)*100) + '%';
       }
     });
-
-    video.addEventListener('loadedmetadata', () => { fill.style.width = '0%'; });
-
+    video.addEventListener('loadedmetadata', () => { fill.style.width='0%'; });
     video.addEventListener('error', () => {
-      console.warn('[video error]', video.src);
-      const muteBtn = reel.querySelector('.mute-btn');
-      if (muteBtn) muteBtn.textContent = '⚠️';
+      const mb = reel.querySelector('.mute-btn');
+      if(mb) mb.textContent = '⚠️';
     });
   });
 }
 
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
    🖱️ التفاعلات
-   ═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════ */
 document.addEventListener('click', async (e) => {
-  // Like
   const likeBtn = e.target.closest('.like');
-  if (likeBtn) {
+  if(likeBtn){
     const reel = likeBtn.closest('.reel');
     const id = reel.dataset.id;
     const nowLiked = !likeBtn.classList.contains('liked');
-
     likeBtn.classList.toggle('liked', nowLiked);
     likeBtn.querySelector('.icon').textContent = nowLiked ? '❤️' : '🤍';
-
-    const base = parseInt(likeBtn.dataset.base, 10) || 0;
-    likeBtn.querySelector('.count').textContent = (base + (nowLiked ? 1 : 0)) || '';
-
-    try {
-      const set = new Set(JSON.parse(localStorage.getItem(CACHE_KEY + '_likes') || '[]'));
+    const base = parseInt(likeBtn.dataset.base,10) || 0;
+    likeBtn.querySelector('.count').textContent = (base + (nowLiked?1:0)) || '';
+    try{
+      const set = new Set(JSON.parse(localStorage.getItem(CACHE_KEY+'_likes')||'[]'));
       nowLiked ? set.add(id) : set.delete(id);
-      localStorage.setItem(CACHE_KEY + '_likes', JSON.stringify([...set]));
-    } catch (err) {}
-
+      localStorage.setItem(CACHE_KEY+'_likes', JSON.stringify([...set]));
+    }catch(err){}
     haptic('light');
     return;
   }
 
-  // Share
   const shareBtn = e.target.closest('.share');
-  if (shareBtn) {
+  if(shareBtn){
     const reel = shareBtn.closest('.reel');
     const url = reel.dataset.url || reel.querySelector('video').src;
-    try {
-      if (navigator.share) await navigator.share({ url, title: 'Crynova Reels' });
+    try{
+      if(navigator.share) await navigator.share({ url, title:'Crynova Reels' });
       else { await navigator.clipboard.writeText(url); toast('✅ تم نسخ الرابط'); }
-    } catch (err) { /* cancelled */ }
+    }catch(err){}
     haptic('light');
     return;
   }
 
-  // Open in Telegram
   const openBtn = e.target.closest('.open');
-  if (openBtn) {
+  if(openBtn){
     const reel = openBtn.closest('.reel');
     const url = reel.dataset.url || reel.querySelector('video').src;
-    if (url && url.startsWith('https://t.me/')) {
-      if (tg?.openTelegramLink) tg.openTelegramLink(url);
-      else window.open(url, '_blank');
+    if(url && url.startsWith('https://t.me/')){
+      if(tg?.openTelegramLink) tg.openTelegramLink(url);
+      else window.open(url,'_blank');
     } else {
-      try { await navigator.clipboard.writeText(url); toast('✅ تم نسخ الرابط'); } catch (e) {}
+      try{ await navigator.clipboard.writeText(url); toast('✅ تم نسخ الرابط'); }catch(err){}
     }
     return;
   }
 
-  // Mute toggle
   const muteBtn = e.target.closest('.mute-btn');
-  if (muteBtn) {
+  if(muteBtn){
     const reel = muteBtn.closest('.reel');
     const video = reel.querySelector('video');
     video.muted = !video.muted;
@@ -544,105 +537,146 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-  // Caption expand
   const captionEl = e.target.closest('.caption');
-  if (captionEl) {
-    captionEl.classList.toggle('expanded');
-    return;
-  }
+  if(captionEl){ captionEl.classList.toggle('expanded'); return; }
 
-  // Tap video → play/pause
   const reel = e.target.closest('.reel');
-  if (reel && !e.target.closest('.actions') && !e.target.closest('.caption-area')) {
+  if(reel && !e.target.closest('.actions') && !e.target.closest('.caption-area')){
     const video = reel.querySelector('video');
-    if (!video) return;
-    if (video.paused) {
-      video.play().then(() => reel.classList.remove('paused')).catch(() => {});
+    if(!video) return;
+    if(video.paused){
+      video.play().then(()=>reel.classList.remove('paused')).catch(()=>{});
     } else {
-      video.pause();
-      reel.classList.add('paused');
+      video.pause(); reel.classList.add('paused');
     }
   }
 });
 
-/* ═══════════════════════════════════════════════
-   ❤️ النقر المزدوج = إعجاب
-   ═══════════════════════════════════════════════ */
-let lastTapTime = 0;
-let lastTapReel = null;
-
+/* ❤️ النقر المزدوج = إعجاب */
+let lastTap = 0, lastReel = null;
 document.addEventListener('touchend', (e) => {
   const reel = e.target.closest('.reel');
-  if (!reel) return;
-  if (e.target.closest('.action') || e.target.closest('.caption-area') || e.target.closest('.mute-btn')) return;
-
+  if(!reel) return;
+  if(e.target.closest('.action') || e.target.closest('.caption-area') || e.target.closest('.mute-btn')) return;
   const now = Date.now();
-  if (now - lastTapTime < 300 && lastTapReel === reel) {
+  if(now - lastTap < 300 && lastReel === reel){
     const likeBtn = reel.querySelector('.like');
-    if (likeBtn && !likeBtn.classList.contains('liked')) likeBtn.click();
+    if(likeBtn && !likeBtn.classList.contains('liked')) likeBtn.click();
     showHeart(reel, e.changedTouches[0]);
-    lastTapTime = 0;
-  } else {
-    lastTapTime = now;
-    lastTapReel = reel;
-  }
-}, { passive: true });
+    lastTap = 0;
+  } else { lastTap = now; lastReel = reel; }
+}, { passive:true });
 
-function showHeart(reel, touch) {
+function showHeart(reel, touch){
   const rect = reel.getBoundingClientRect();
   const heart = document.createElement('div');
-  heart.className = 'heart-anim';
-  heart.textContent = '❤️';
+  heart.className='heart-anim'; heart.textContent='❤️';
   heart.style.left = (touch.clientX - rect.left - 55) + 'px';
   heart.style.top  = (touch.clientY - rect.top  - 55) + 'px';
   reel.appendChild(heart);
-  requestAnimationFrame(() => heart.classList.add('pop'));
-  setTimeout(() => heart.remove(), 1000);
+  requestAnimationFrame(()=>heart.classList.add('pop'));
+  setTimeout(()=>heart.remove(), 1000);
 }
 
-/* ═══════════════════════════════════════════════
-   🔄 إعادة التحميل + إيقاف عند إخفاء التطبيق
-   ═══════════════════════════════════════════════ */
-document.getElementById('refresh').addEventListener('click', async () => {
-  try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+/* ═══════════════════════════════════════════════════
+   🔄 إعادة التحميل
+   ═══════════════════════════════════════════════════ */
+$('refresh').addEventListener('click', () => {
+  try{ localStorage.removeItem(CACHE_KEY); }catch(e){}
   init();
 });
 
 document.addEventListener('visibilitychange', () => {
   const vids = document.querySelectorAll('.reel video');
-  if (document.hidden) {
-    vids.forEach(v => v.pause());
-  } else {
+  if(document.hidden) vids.forEach(v=>v.pause());
+  else {
     const active = document.querySelector('.reel.active video');
-    if (active && active.paused) active.play().catch(() => {});
+    if(active && active.paused) active.play().catch(()=>{});
   }
 });
 
-/* ═══════════════════════════════════════════════
+/* تغيير القناة */
+window.changeChannel = function(){
+  const name = prompt('أدخل اسم القناة العامة (بدون @):', CHANNEL);
+  if(!name) return;
+  const clean = name.trim().replace(/^@/,'').replace(/[^a-zA-Z0-9_]/g,'');
+  if(!clean){ alert('اسم غير صالح'); return; }
+  CHANNEL = clean;
+  localStorage.setItem('crynova_channel', clean);
+  localStorage.removeItem(CACHE_KEY);
+  location.reload();
+};
+
+/* ═══════════════════════════════════════════════════
    🚀 التشغيل
-   ═══════════════════════════════════════════════ */
-async function init() {
+   ═══════════════════════════════════════════════════ */
+async function init(){
   renderSkeletons(2);
-  try {
-    const html = await fetchChannelHTML();
-    const reels = parseVideos(html);
-    render(reels);
-  } catch (err) {
-    document.getElementById('reels').innerHTML = `
-      <div class="state error">
-        <div style="font-size:52px">⚠️</div>
-        <div>تعذر جلب الفيديوهات</div>
-        <div class="sub">${escapeHtml(err.message || 'خطأ غير معروف')}</div>
-        <div class="hint">
-          • تأكد أن القناة عامة (public)<br>
-          • الاسم صحيح بدون @<br>
-          • اتصالك بالإنترنت يعمل<br>
-          • t.me غير محجوب على شبكتك
-        </div>
-        <button class="icon-btn" style="width:auto;padding:0 22px;height:42px;border-radius:22px;margin-top:12px"
-          onclick="localStorage.removeItem('${CACHE_KEY}');location.reload()">🔄 إعادة المحاولة</button>
-      </div>`;
+
+  // 1) تحقق أولي من القناة
+  const check = await checkChannelDirect();
+
+  if(check.exists === false){
+    renderDiagnostic({
+      title:'⚠️ القناة غير موجودة',
+      lead:`لم نجد قناة باسم <b>@${escapeHtml(CHANNEL)}</b>.`,
+      rows:[
+        { label:'اسم القناة', status:'err', detail: escapeHtml(CHANNEL) },
+        { label:'السبب', status:'err', detail: escapeHtml(check.reason || 'غير معروفة') }
+      ],
+      help:`<b>الحلول:</b><br>
+        1) تأكد من كتابة الاسم بشكل صحيح<br>
+        2) ابحث عن القناة في تلغرام وتأكد أنها <b>عامة</b><br>
+        3) جرّب قناة معروفة مثل <code>telegram</code> أو <code>durov</code><br>
+        4) اضغط "تغيير القناة" وأدخل الاسم الجديد`,
+    });
+    return;
   }
+
+  // 2) جلب البيانات عبر كل الوسائط
+  const result = await fetchAll();
+
+  if(!result.ok){
+    // فشل كل الوسائط
+    const rows = result.diag.map(d => ({
+      label: d.proxy.name,
+      status: 'err',
+      detail: escapeHtml(d.error || 'فشل')
+    }));
+    renderDiagnostic({
+      title:'🌐 فشل الاتصال بتيليجرام',
+      lead:'كل وسطاء CORS فشلوا. هذا شائع بسبب حظر تيليجرام لعناوين IP الخاصة بالوسطاء.',
+      rows:[
+        { label:'القناة', status:'ok', detail: escapeHtml(CHANNEL) },
+        ...rows
+      ],
+      help:`<b>هذا شائع جداً. الحلول:</b><br>
+        1) جرّب مرة أخرى بعد دقيقة (قد يكون الوسيط مزدحماً)<br>
+        2) استخدم <b>وسيطك الخاص</b> (Cloudflare Worker مجاني)<br>
+        3) أو أضف وسيطك المخصص عبر الإعدادات`,
+    });
+    return;
+  }
+
+  if(result.empty){
+    renderDiagnostic({
+      title:'📭 القناة بلا فيديوهات',
+      lead:`القناة <b>@${escapeHtml(CHANNEL)}</b> موجودة لكن لا تحتوي على فيديوهات حديثة.`,
+      rows:[
+        { label:'القناة', status:'ok', detail:'موجودة' },
+        { label:'الفيديوهات', status:'warn', detail:'0' }
+      ],
+      help:`<b>جرّب:</b><br>
+        • قناة أخرى عبر زر "تغيير القناة"<br>
+        • أو أرسل فيديو في القناة ثم أعد المحاولة`,
+    });
+    return;
+  }
+
+  // 3) عرض الفيديوهات
+  const reels = parseVideos(result.html);
+  renderReels(reels);
+  if(reels.length) toast(`✅ تم تحميل ${reels.length} فيديو`);
 }
 
 init();
